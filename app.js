@@ -19,6 +19,7 @@ var event = require('./routes/event');
 var invite = require('./routes/invite');
 var register = require('./routes/register');
 var registered = require('./routes/registered');
+var memberslist = require('./routes/memberslist');
 
 
 // uncomment after placing your favicon in /public
@@ -35,6 +36,7 @@ app.use('/event',event);
 app.use('/invite', invite);
 app.use('/register', register);
 app.use('/registered', registered);
+app.use('/memberslist', memberslist);
 
 
 http.listen(config.getParam('port'), function () {
