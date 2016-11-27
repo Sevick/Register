@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invite to <%= eventName %></title>
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" type="text/css" href="/css/invite.css">
+
+    <script src="/js/fine-uploader/jquery.fine-uploader.min.js"></script>
+    <script src="/js/serializejson/jquery.serializejson.min.js"></script>
+    <script src="/js/qr/qrcode.min.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title">Invite people to <%= eventName %></h3>
+        </div>
+
+        <div class="panel-body">
+            <div class="col-md-12" id="qrcodediv">
+                <div id="qrcode" class="text-center"></div>
+            </div>
+        </div>
+
+
+        <div class="panel-body">
+
+
+            <div class="row">
+
+                <div class="col-md-2"></div>
+                <div class="input-group col-md-8" id="inputsDiv">
+                    <input type="text" class="form-control rdonlyinput" id="registerlink" name="registerlink" readonly
+                           value="<%= registrationUrl %>">
+                       <span class="input-group-btn inputaction">
+                            <button class="btn btn-default" type="button" id="copyreglinkbtn">Copy link</button>
+                        </span>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+
+            <br>
+
+            <div class="col-md-2"></div>
+            <div id="share-buttons" class="col-md-8 hoveropacity">
+                <!-- Facebook -->
+                <div class="tooltip">
+                    <a href="http://www.facebook.com/sharer.php?u=<%= registrationUrl %>" target="_new"><img
+                                src="/images/facebook.png" alt="Facebook"/></a>
+                    <span class="tooltiptext">Share on Facebook</span>
+                </div>
+                <!-- Google+ -->
+                <div class="tooltip">
+                    <a href="https://plus.google.com/share?url=<%= registrationUrl %>" target="_new"><img
+                                src="/images/google.png" alt="Google"/></a>
+                    <span class="tooltiptext">Share on Google+</span>
+                </div>
+                <!-- Twitter -->
+                <div class="tooltip">
+                    <a href="https://twitter.com/share?url=<%= registrationUrl %>&amp;text=Join <%= eventName %>!&amp;hashtags=<%= eventName %>"
+                       target="_new"><img src="/images/twitter.png" alt="Twitter"/></a>
+                    <span class="tooltiptext">Share on Twitter</span>
+                </div>
+
+                <!-- Digg -->
+                <div class="tooltip">
+                    <a href="http://www.digg.com/submit?url=<%= registrationUrl %>" target="_new"><img
+                                src="/images/diggit.png" alt="Digg"/></a>
+                    <span class="tooltiptext">Share on Digg</span>
+                </div>
+
+                <!-- Reddit -->
+                <div class="tooltip">
+                    <a href="http://reddit.com/submit?url=<%= registrationUrl %>&amp;title=<%= eventName %>"
+                       target="_new"><img src="/images/reddit.png" alt="Reddit"/></a>
+                    <span class="tooltiptext">Share on Reddit</span>
+                </div>
+
+                <!-- VK -->
+                <div class="tooltip">
+                    <a href="http://vkontakte.ru/share.php?url=<%= registrationUrl %>" target="_new"><img
+                                src="/images/vk.png" alt="VK"/></a>
+                    <span class="tooltiptext">Share on VK</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var eventId = "<%= eventId %>";
+        var registrationUrl = "<%= registrationUrl %>";
+        var qrcode = new QRCode(document.getElementById("qrcode"),
+                {
+                    text: registrationUrl,
+                    width: 256,
+                    height: 256,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+        $('#copyreglinkbtn').bind('click', function (event) {
+            var copyTextarea = $('#registerlink');
+            copyTextarea.select();
+            document.execCommand('copy');
+        });
+
+
+        jQuery('a[target^="_new"]').click(function() {
+            return openWindow(this.href);
+        });
+        function openWindow(url) {
+            if (window.innerWidth <= 640) {
+                // if width is smaller then 640px, create a temporary a elm that will open the link in new tab
+                var a = document.createElement('a');
+                a.setAttribute("href", url);
+                a.setAttribute("target", "_blank");
+                var dispatch = document.createEvent("HTMLEvents");
+                dispatch.initEvent("click", true, true);
+                a.dispatchEvent(dispatch);
+            }
+            else {
+                var width = window.innerWidth * 0.66 ;
+                // define the height in
+                var height = width * window.innerHeight / window.innerWidth ;
+                // Ratio the hight to the width as the user screen ratio
+                window.open(url , 'newwindow', 'width=' + width + ', height=' + height + ', top=' + ((window.innerHeight - height) / 2) + ', left=' + ((window.innerWidth - width) / 2));
+            }
+            return false;
+        }
+
+    });
+</script>
+
+</body>
+</html>

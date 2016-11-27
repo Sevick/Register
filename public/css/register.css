@@ -1,0 +1,28 @@
+.captiontext{
+    font-size: large;
+    font-weight: bold;
+    font-family: Arial, "Times New Roman";
+}
+
+#eventData{
+    margin-top: 3em;
+    margin-bottom: 3em;
+}
+
+/*#eventDate{
+    margin-top: 1em;
+}*/
+
+
+/*.eventImg{
+    max-width: 10vw;
+    max-height: 10vh;
+}*/
+
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+
+

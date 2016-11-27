@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><%= eventdata.name %></title>
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+    <script src="/js/serializejson/jquery.serializejson.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="./css/register.css">
+</head>
+<body>
+
+<div class="container" id="eventData">
+    <div class="row">
+        <div id="eventImgs" class="col-md-3">
+        </div>
+
+        <div class="col-md-8 captiontext">
+            <div class="vcenter">
+                <div class="eventName">
+                    <h1>Register for <%= eventdata.name %></h1>
+                </div>
+                <div>
+                    <span id="eventDate"></span>
+                </div>
+                <br>
+                <div>
+                    Registration ends on <span id="regEndDate"></span>
+                </div>
+                <div id="eventDate">
+                    <%= eventdata.vacancies %> vacant places left
+                </div>
+
+            </div>
+        </div>
+
+        <div class="col-md-1">
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <form method="post" action="#" id="registerForm">
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required="true">
+        </div>
+
+        <div id="inputsContainer">
+        </div>
+
+        <input type="hidden" name="eventId">
+        <button type="submit" class="btn btn-primary pull-right">Register</button>
+    </form>
+</div>
+
+<script type="text/javascript" src="js/common.js"></script>
+<script type="text/javascript" src="js/register.js"></script>
+<script type="text/javascript">
+
+    var eventId = "<%= eventdata.id %>";
+    var eventDt = new Date("<%= eventdata.dt %>");
+    var regEndDt = new Date("<%= eventdata.regend %>");
+    var eventImgsList = "<%= eventdata.imgslist %>";
+    var eventImgs = eventImgsList.split('|');
+    if (eventImgsList===""){
+        eventImgs = [];
+    }
+
+    var fieldsJSON=<%- eventdata.fields %>;
+    setupDoc(fieldsJSON);
+
+
+    $("#eventDate").html(eventDt.toLocaleDateString() + "&nbsp&nbsp" + eventDt.toLocaleTimeString());
+    $("#regEndDate").html(regEndDt.toLocaleDateString() + "&nbsp&nbsp" + regEndDt.toLocaleTimeString());
+
+    var imgTemplate = '<img src="%IMGSRC%" class="img-responsive center-block">';
+    //var imgTemplate = '<img src="%IMGSRC%" class="eventImg">';
+    if (eventImgs && eventImgs.length > 0) {
+        var imgHTML = imgTemplate.replace("%IMGSRC%", 'http://localhost:3001/event/image?id=' + eventId + '&img=' + eventImgs[0]);
+        console.log(imgHTML);
+        $("#eventImgs").html(imgHTML);
+    }
+
+    $('#registerForm').on('submit', function (event) {
+        event.preventDefault();
+        $('input[name="eventId"]').val(eventId);
+        $.post({
+            url: '/register?id='+eventId,
+            type: 'post',
+            data: $('#registerForm').serializeJSON(),
+            //data: $(this).serialize(),
+            success: function (data, textStatus, jqXHR) {
+                // if success, HTML response is expected, so replace current
+                if (textStatus === 'success') {
+                    console.log(data);
+                    redirect(data.redirect);
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 0 || jqXHR == 302) {
+                alert('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+            } else {
+                alert('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+            }
+        });
+        return false;
+    });
+
+
+</script>
+
+</body>
+</html>

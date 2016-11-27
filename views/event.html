@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create new event</title>
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" type="text/css" href="/css/event.css">
+
+    <script src="https://rawgit.com/enyo/dropzone/master/dist/dropzone.js"></script>
+    <link rel="stylesheet" href="https://rawgit.com/enyo/dropzone/master/dist/dropzone.css">
+
+    <script src="/js/serializejson/jquery.serializejson.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title">Create event</h3>
+        </div>
+
+        <div class="panel-body">
+
+            <form method="post" action="#" id="eventForm">
+                <div id="inputsContainer">
+
+                    <div class="form-group col-md-6">
+                        <label for="eventname">Event name</label>
+                        <input type="text" class="form-control" id="eventname" name="eventname" required="true"
+                               maxlength="10">
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        <label for="eventdate">Event date</label>
+                        <input type="date" class="form-control" id="eventdate" name="eventdate" required="true">
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        <label for="regstart">Registration start</label>
+                        <input type="date" class="form-control" id="regstart" name="regstart" required="true">
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        <label for="regend">Registration end</label>
+                        <input type="date" class="form-control" id="regend" name="regend" required="true">
+                    </div>
+
+                    <div class="form-group col-md-12">
+                        <label for="info">Event description</label>
+                        <textarea class="form-control" rows="5" name="info" id="info"></textarea>
+                    </div>
+
+
+                    <div class="form-group col-md-6">
+                        <label for="minmembers">Minimum members</label>
+                        <input type="number" class="form-control" id="minmembers" name="minmembers" required="true"
+                               min="1"
+                               max="9999999">
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="maxmembers">Maximum members</label>
+                        <input type="number" class="form-control" id="maxmembers" name="maxmembers" required="true"
+                               min="1"
+                               max="9999999">
+                    </div>
+
+                </div>
+
+                <div class="col-md-12">
+                    <div class="dropzone col-md-12" id="myDropzone"></div>
+                </div>
+
+
+                <input type="hidden" name="uploadedFiles">
+                <input type="hidden" name="eventRandomHash">
+                <input type="hidden" name="eventId">
+
+
+                <button type="submit" class="btn btn-primary pull-right">Submit</button>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="/js/common.js"></script>
+<script type="text/javascript" src="/js/event.js"></script>
+<script type="text/javascript">
+    var eventRandomHash=Math.random().toString(36).substring(2,10);
+    eventRandomHash=eventRandomHash+Date.now();
+    //console.log(eventRandomHash);
+
+    var eventImages = [];
+    setupDoc();
+
+    Dropzone.options.myDropzone = {
+        paramName: "file", // The name that will be used to transfer the file
+        maxFilesize: 1024, // MB
+        url: "/event/file-upload?hash="+eventRandomHash,
+        acceptedFiles: 'image/*',
+        addRemoveLinks: true,
+        autoProcessQueue: true,
+        dictDefaultMessage: "Click to add images<br>Or drag&drop them here (max size - 1MB)",
+        init: function () {
+            this.on("success", function (file) {
+                console.log("Images added: ");
+                console.log(file);
+                eventImages.push(file);
+            });
+            this.on("removedfile", function (file) {
+                console.log("Images removed: ");
+                console.log(file);
+            });
+        },
+    };
+
+
+    $('#eventForm').on('submit', function (event) {
+        event.preventDefault();
+        $('input[name="uploadedFiles"]').val(JSON.stringify(eventImages));
+        $('input[name="eventRandomHash"]').val(eventRandomHash);
+        $.post({
+            url: '/event/newevent',
+            type: 'post',
+            data: $('#eventForm').serializeJSON(),
+            //data: $(this).serialize(),
+            success: function (data, textStatus, jqXHR) {
+                // if success, HTML response is expected, so replace current
+                if (textStatus === 'success') {
+                    /*
+                    var newDoc = document.open('text/html', 'replace');
+                    newDoc.write(data);
+                    newDoc.close();
+                    */
+                    console.log(data);
+                    redirect(data.redirect);
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 0 || jqXHR == 302) {
+                alert('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+            } else {
+                alert('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+            }
+        });
+        return false;
+    });
+
+</script>
+
+</body>
+</html>

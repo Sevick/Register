@@ -1,0 +1,9 @@
+#membersListTable{
+    min-width: 90%;
+    margin: auto;
+}
+
+
+#membersListTable>td{
+    min-width: 100px;
+}

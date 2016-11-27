@@ -1,0 +1,182 @@
+/*
+ Event members registration form
+ */
+
+"use strict";
+
+var express = require('express');
+var multer = require('multer')
+var fs = require('fs');
+var path = require('path');
+var favicon = require('serve-favicon');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
+var q = require('q');
+
+var express = require('express');
+var router = express.Router();
+module.exports = router;
+
+var queryEventData = 'SELECT id,name,dt,regstart,regend,info,price,currency,minmembers,maxmembers, IFNULL(memberscount,0) memberscount, imgslist, vacancies, fields FROM v_eventdata WHERE id=?';
+
+
+/* GET members listing. */
+router.get('/', function (req, res, next) {
+    logger.log('GET register/   ' + req.query.id);
+
+    if (req.query.id) {
+
+        logger.log('Quering database...');
+        var rows = [];
+        db.connection.query(queryEventData, req.query.id)
+            .on('result', function (row) {
+                logger.log("Data retrieved from db for event with id=" + req.query.id);
+                logger.log(row.fields);
+                rows.push(row);
+                var result={
+                    eventdata : row
+                }
+                res.render('register', result);
+            })
+            .on('end', function () {
+                logger.log('Query finished');
+                if (rows.length < 1) {
+                    logger.log("No data found. Invalid event id");
+                }
+            })
+            .on('error', function (err) {
+                logger.log("Error while quering data from eventdata");
+                logger.log(err);
+            });
+    }
+    else {
+        logger.log("event id not specified");
+        res.send('event id not specified');
+    }
+});
+
+router.post('/', function (req, res, next) {
+    logger.log('POST register/   ' + req.query.id);
+
+    if (req.query.id) {
+
+        insertEventmember(req.body)
+            .then(function () {
+                logger.log("Data sumbitted to db");
+                sendRegistered(req,res, req.query.id);
+            })
+            .catch((err) => {
+                logger.log("Failed to submit data to db");
+                logger.log(err);
+            });
+
+    }
+    else {
+        logger.log("event id not specified");
+        res.send('event id not specified');
+    }
+});
+
+
+function insertEventmember(memberData) {
+    var deferred = q.defer();
+    var conn;
+    db.getConnection()
+        .then((conn) => {
+            conn.beginTransaction(function (err) {
+                if (err) {
+                    deferred.reject(err);
+                    return;
+                }
+
+                if (!memberData['email']){
+                    logger.log(memberData);
+                    deferred.reject('Email not specified');
+                    return;
+                }
+
+                var confirmCode=Math.random().toString(36).substring(2,10);
+                confirmCode=confirmCode+Date.now();
+
+                conn.query('INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)', [memberData.eventId,confirmCode,memberData['email']], function (err, result) {
+                    if (err) {
+                        console.log(err);
+                        return conn.rollback(function () {
+                            deferred.reject(err);
+                        });
+                    }
+
+                    var eventmemberId = result.insertId;
+                    logger.log("eventmemberId=" + eventmemberId);
+
+                    var promises = [];
+                    for (var memberDataFieldIdx in memberData) {
+                        if (memberDataFieldIdx !== 'eventId' && memberDataFieldIdx !== 'email') {
+                            promises.push(insertmemberData(conn, eventmemberId, memberDataFieldIdx, memberData[memberDataFieldIdx]));
+                        }
+                    }
+
+                    q.all(promises)
+                        .then((values) => {
+                            conn.commit((err) => {
+                                if (err) {
+                                    conn.rollback(function () {
+                                        deferred.reject(err);
+                                        return;
+                                    });
+                                }
+                                conn.release();
+                                deferred.resolve();
+                            });
+
+                        })
+                        .catch((err) => {
+                            logger.log('Error while inserting fields data');
+                            logger.log(err);
+                            deferred.reject(err);
+                        });
+                })
+
+
+            });
+        })
+        .catch((err) => {
+            logger.log('Unable to connect to database');
+            logger.log(err);
+        })
+
+
+    return deferred.promise;
+}
+
+
+function insertmemberData(conn, memberId, fieldId, fieldData) {
+    var deferred = q.defer();
+
+    //logger.log('field #' + fieldId + '  insert Data: ' + fieldData);
+    conn.query('INSERT INTO memberdata (memberID,FIELDID,DATA) VALUES (?,?,?)', [memberId, fieldId, fieldData], function (err, result) {
+        if (err) {
+            deferred.reject(err);
+            return;
+        }
+        //logger.log('OK');
+        deferred.resolve(result.insertId);
+    })
+    return deferred.promise;
+}
+
+function sendRegistered(req,res, eventId){
+    var response = {
+        host: req.protocol + '://' + req.get('host'),
+        redirect: req.protocol + '://' + req.get('host') + '/registered?id=' + eventId
+    };
+    res.send(response);
+}
+
+
+
+
+
+
+
+
