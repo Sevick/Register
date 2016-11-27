@@ -1,6 +1,7 @@
 /**
  * Created by S on 27.11.2016.
  */
+//Created By Benya!!!
 "use strict";
 
 var express = require('express');
@@ -44,7 +45,9 @@ router.get('/', function (req, res) {
                 eventId: eventId,
                 memberslist: rows
             };
-            //logger.log(result.memberslist[0]);
+            //******************
+            logger.log(result.memberslist);
+
             res.render('memberslist', result);
         })
         .catch((err)=> {
@@ -63,8 +66,8 @@ function getSqlForDataRetrive(conn, eventId) {
             deferred.reject(err);
             return;
         }
-        //logger.log("Pivot sql: ");
-        //logger.log(result[0].pivotsql);
+        logger.log("Pivot sql: ");
+        logger.log(result[0].pivotsql);
         deferred.resolve(result[0].pivotsql);
     })
     return deferred.promise;
