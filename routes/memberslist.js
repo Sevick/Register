@@ -1,6 +1,7 @@
 /**
  * Created by S on 27.11.2016.
  */
+//Created By Benya!!!
 "use strict";
 
 var express = require('express');
@@ -12,9 +13,24 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var q = require('q');
 
-
 var router = express.Router();
 module.exports = router;
+
+router.post('/delmember', function (req, res) {
+    logger.log('POST /memberslist/delmember ID=' + req.body.memberid);
+
+    db.connection.query("DELETE FROM register.eventmember WHERE memberid=?", [req.body.memberid])
+        .on('result', function (dbQeryRes) {
+            logger.log("on result");
+            logger.log(dbQeryRes);
+            res.end("deleted");
+        })
+        .on('error', function (err) {
+            logger.log("Error  deleting");
+            logger.log(err);
+            res.end("Error deleting");
+        });
+});
 
 
 router.get('/', function (req, res) {
@@ -34,17 +50,22 @@ router.get('/', function (req, res) {
     db.getConnection()
         .then((connection) => {
             conn=connection;
+            logger.log("then #1 conn");
             return getSqlForDataRetrive(conn, eventId);
         })
         .then((sqltext) => {
+            logger.log("then #2 sqlText");
             return getMemebersListData(conn, eventId, sqltext);
         })
         .then((rows) => {
+            logger.log("then #3 rows");
             var result = {
                 eventId: eventId,
                 memberslist: rows
             };
-            //logger.log(result.memberslist[0]);
+            //******************
+            logger.log(result.memberslist);
+
             res.render('memberslist', result);
         })
         .catch((err)=> {
@@ -63,8 +84,8 @@ function getSqlForDataRetrive(conn, eventId) {
             deferred.reject(err);
             return;
         }
-        //logger.log("Pivot sql: ");
-        //logger.log(result[0].pivotsql);
+        logger.log("Pivot sql: ");
+        logger.log(result[0].pivotsql);
         deferred.resolve(result[0].pivotsql);
     })
     return deferred.promise;

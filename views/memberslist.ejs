@@ -18,28 +18,91 @@
             crossorigin="anonymous"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/memberslist.css">
+
+    <style>
+        .narrow-col{
+            width: 2vw;
+            text-align: center;
+        }
+        .my-table-cls{
+            text-align: center;
+        }
+
+    </style>
 </head>
 <body>
 
-<div class="container" id="eventData">
+    <div class="container container-fluid" id="eventData">
+        <div class="row">
+            <div class="col-xs-10">
+                <h2>Event # 666</h2>
+            </div>
+        </div>
+        <div>
+            <table id="membersListTable" class="my-table-cls table-hover table-striped table-condensed col-xs-10">
+                <tr>
+                    <td>#</td>
+                    <% for (var key in memberslist[0]) {
+                         if (key != "eventid" && key != "memberid") {%>
+                            <td><%= key %></td>
+                    <%}  } %>
+                    <td class="narrow-col">del</td>
+                </tr>
 
-<table id="membersListTable" class="table-bordered table-hover">
-    <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
-        <tr>
-        <% for (var fieldIdx  in memberslist[memberIdx]) { %>
-            <td><%= (memberslist[memberIdx])[fieldIdx] %></td>
-        <% } %>
-    <% } %>
-</table>
+                <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
+                    <tr>
+                        <td>
+                            <%= memberIdx +1 %>
+                        </td>
+                        <% for (var fieldIdx  in memberslist[memberIdx]) {
+                            if (fieldIdx != "eventid" && fieldIdx != "memberid"){%>
+                                <td><%= (memberslist[memberIdx])[fieldIdx] %></td>
+                        <%} } %>
+                        <td class="col-xs-1 delspan">
+                            <span class="glyphicon glyphicon-remove-circle delMember" memberid="<%= memberslist[memberIdx]['memberid'] %>"></span>
+                        </td>
+                <% } %>
+            </table>
+        </div>
+    </div>
 
-</div>
+    <script>
+        var onDel = function (){
+            memberId2Del = {memberid : this.getAttribute('memberid')};
+            console.log(memberId2Del);
+            $(this).parent().parent().remove();
 
+            // POST to delete from base
 
-<script>
-    var membersList="<%= memberslist %>";
+            $.post({
+                url: '/memberslist/delmember',
+                type: 'post',
+                data: memberId2Del,
+                success: function (data, textStatus, jqXHR) {
+                    // if success, HTML response is expected, so replace current
+                    if (textStatus === 'success') {
+                        /*
+                         var newDoc = document.open('text/html', 'replace');
+                         newDoc.write(data);
+                         newDoc.close();
+                         */
+                        console.log(data);
+//                        redirect(data.redirect);
+                    }
+                }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
 
+//************* rebuild page and send alert Error
 
-</script>
+                if (jqXHR.status == 0 || jqXHR == 302) {
+                    alert('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+                } else {
+                    alert('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+                }
+            });
+        }
+        $('.container').on('click', '.delMember', onDel); // onClick for Close spans
+    </script>
 
 </body>
 </html>
