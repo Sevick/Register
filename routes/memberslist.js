@@ -13,9 +13,45 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var q = require('q');
 
-
 var router = express.Router();
 module.exports = router;
+
+router.post('/delmember', function (req, res) {
+    logger.log('POST /memberslist/delmember ID=' + req.body.memberid);
+
+
+    db.connection.query("INSERT INTO event (NAME,DT,REGSTART,REGEND,INFO,PRICE,CURRENCY,MINMEMBERS,MAXMEMBERS) VALUES (?,?,?,?,?,?,?,?,?)", [[req.body.eventname], new Date([req.body.eventdate]), new Date([req.body.regstart]), new Date([req.body.regend]), [req.body.info], [req.body.price], [req.body.currency], [req.body.minmembers], [req.body.maxmembers]])
+        .on('result', function (row) {
+            logger.log("Row inserted to events  id=" + row.insertId);
+            var dirPath = './uploads/' + req.body.eventRandomHash + '/';
+            fs.readdir(dirPath, function (err, files) {
+                if (!err) {
+                    for (var i = 0; i < files.length; i++) {
+                        uploadImgToDb(dirPath + files[i], row.insertId);
+                    }
+                }
+                else {
+                    logger.log('Error loading files to db');
+                    logger.log(err);
+                }
+            });
+
+            //res.set("Content-Type", "text/plain");
+            var response = {
+                eventId: row.insertId,
+                host: req.protocol + '://' + req.get('host'),
+                redirect: req.protocol + '://' + req.get('host') + '/invite?id=' + row.insertId
+            };
+            res.send(response);
+        })
+        .on('error', function (err) {
+            logger.log("Error while inserting into event");
+            logger.log(err);
+        });
+
+
+    res.end("deleted");
+});
 
 
 router.get('/', function (req, res) {
