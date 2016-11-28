@@ -9,6 +9,7 @@ global.logger = require('./logger')();
 global.cfg = require('./config')();
 global.db = require('./dbhelper');
 global.tools = require('./tools');
+global.mail = require('./mail');
 
 var app = express();
 var http = require('http').Server(app);

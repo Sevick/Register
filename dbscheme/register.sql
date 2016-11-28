@@ -83,7 +83,8 @@ CREATE TABLE `eventimg` (
   `eventid` int(11) NOT NULL,
   `img` longblob NOT NULL,
   `name` varchar(45) NOT NULL,
-  UNIQUE KEY `IDX_EVENTIMP_UQ` (`eventid`,`name`)
+  UNIQUE KEY `IDX_EVENTIMP_UQ` (`eventid`,`name`),
+  CONSTRAINT `FK_EVENTIMG_EVENT` FOREIGN KEY (`eventid`) REFERENCES `event` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -110,7 +111,9 @@ CREATE TABLE `eventmember` (
   `email` varchar(60) NOT NULL,
   `confirmcode` varchar(45) NOT NULL,
   `confirmed` int(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`memberid`)
+  PRIMARY KEY (`memberid`),
+  UNIQUE KEY `IDX_EVENTMEMBER_EVENT` (`eventid`,`memberid`),
+  CONSTRAINT `FK_EVENTMEMBER_EVENT` FOREIGN KEY (`eventid`) REFERENCES `event` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -153,28 +156,6 @@ INSERT INTO `fields` VALUES (1,68,'phone',1,NULL,NULL),(3,68,'name',1,NULL,NULL)
 UNLOCK TABLES;
 
 --
--- Table structure for table `member`
---
-
-DROP TABLE IF EXISTS `member`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `member` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `member`
---
-
-LOCK TABLES `member` WRITE;
-/*!40000 ALTER TABLE `member` DISABLE KEYS */;
-/*!40000 ALTER TABLE `member` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `memberdata`
 --
 
@@ -183,10 +164,13 @@ DROP TABLE IF EXISTS `memberdata`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `memberdata` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `memberid` varchar(45) NOT NULL,
+  `memberid` int(11) NOT NULL,
   `fieldid` int(11) NOT NULL,
   `data` varchar(150) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `FK_DATAFIELDS_idx` (`fieldid`),
+  KEY `FK_DATAMEMBER_idx` (`memberid`),
+  CONSTRAINT `FK_DATAMEMBER` FOREIGN KEY (`memberid`) REFERENCES `eventmember` (`memberid`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -196,7 +180,7 @@ CREATE TABLE `memberdata` (
 
 LOCK TABLES `memberdata` WRITE;
 /*!40000 ALTER TABLE `memberdata` DISABLE KEYS */;
-INSERT INTO `memberdata` VALUES (2,'11',1,'123'),(3,'11',2,'sevick.v@gmail.com'),(5,'12',1,'234'),(6,'12',2,'sevick.v@gmail.com'),(7,'12',3,'Vsevolod Vasilyev'),(8,'13',1,'345'),(9,'13',2,'sevick.v@gmail.com'),(10,'13',3,'Vsevolod Vasilyev'),(11,'14',1,'456'),(12,'14',2,'sevick.v@gmail.com'),(13,'14',3,'Vsevolod Vasilyev'),(14,'15',1,'789789'),(15,'15',2,'sevick.v@gmail.com'),(16,'15',3,'Vsevolod Vasilyev'),(17,'16',1,'78978978'),(18,'16',2,'sevick.v@gmail.com'),(19,'16',3,'Vsevolod Vasilyev'),(20,'17',1,'34568888'),(21,'17',2,'sevick.v@gmail.com'),(22,'17',3,'Vsevolod Vasilyev'),(23,'18',1,'23452345'),(24,'18',2,'sevick.v@gmail.com'),(25,'18',3,'Vsevolod Vasilyev'),(26,'19',1,'3456'),(27,'19',2,'sevick.v@gmail.com'),(28,'19',3,'Vsevolod Vasilyev'),(29,'20',1,'890'),(30,'20',2,'sevick.v@gmail.com'),(31,'20',3,'Vsevolod Vasilyev'),(32,'21',7,'789'),(33,'21',8,'sevick.v@gmail.com'),(34,'21',9,'Vsevolod Vasilyev'),(35,'22',4,'678'),(36,'22',5,'sevick.v@gmail.com'),(37,'22',6,'Vsevolod Vasilyev'),(38,'23',1,'89264407764'),(39,'23',2,'sevick.v@gmail.com'),(40,'23',3,'Vsevolod Vasilyev'),(41,'24',1,'89264407764'),(42,'24',2,'sevick.v@gmail.com'),(43,'24',3,'Vsevolod Vasilyev'),(44,'25',1,'89264407764'),(45,'25',3,'Vsevolod Vasilyev'),(46,'26',1,'89264407764'),(47,'26',3,'Vsevolod Vasilyev'),(48,'27',1,'89264407764'),(49,'27',3,'Vsevolod Vasilyev');
+INSERT INTO `memberdata` VALUES (2,11,1,'123'),(5,12,1,'234'),(7,12,3,'Vsevolod Vasilyev'),(8,13,1,'345'),(10,13,3,'Vsevolod Vasilyev'),(11,14,1,'456'),(13,14,3,'Vsevolod Vasilyev'),(14,15,1,'789789'),(16,15,3,'Vsevolod Vasilyev'),(17,16,1,'78978978'),(19,16,3,'Vsevolod Vasilyev'),(20,17,1,'34568888'),(22,17,3,'Vsevolod Vasilyev'),(23,18,1,'23452345'),(25,18,3,'Vsevolod Vasilyev'),(26,19,1,'3456'),(28,19,3,'Vsevolod Vasilyev'),(29,20,1,'890'),(31,20,3,'Vsevolod Vasilyev'),(32,21,7,'789'),(34,21,9,'Vsevolod Vasilyev'),(35,22,4,'678'),(37,22,6,'Vsevolod Vasilyev'),(38,23,1,'89264407764'),(40,23,3,'Vsevolod Vasilyev'),(41,24,1,'89264407764'),(43,24,3,'Vsevolod Vasilyev'),(44,25,1,'89264407764'),(45,25,3,'Vsevolod Vasilyev'),(46,26,1,'89264407764'),(47,26,3,'Vsevolod Vasilyev'),(48,27,1,'89264407764'),(49,27,3,'Vsevolod Vasilyev');
 /*!40000 ALTER TABLE `memberdata` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -425,4 +409,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-11-27 20:35:10
+-- Dump completed on 2016-11-28 16:30:43

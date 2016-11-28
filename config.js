@@ -11,6 +11,23 @@ var config = {
         user: 'register',
         password: 'gfhjkm',
         database: 'register'
+    },
+    mailconfig:{
+        smtp: {
+            host: "mail.fbytes.com", // hostname
+            secure: false,           // use SSL
+            port: 25,                // port for secure SMTP
+            auth: {
+                user: "eventservice@fbytes.com",
+                pass: "q35a96bbq"
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        },
+
+        from: 'Eventer<eventservice@fbytes.com>',
+        replyto: 'eventservice@fbytes.com',
     }
 };
 

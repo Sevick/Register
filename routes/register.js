@@ -12,6 +12,7 @@ var favicon = require('serve-favicon');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var q = require('q');
+var ejs = require('ejs');
 
 var express = require('express');
 var router = express.Router();
@@ -21,6 +22,37 @@ var queryEventData = 'SELECT id,name,dt,regstart,regend,info,price,currency,minm
 
 
 /* GET members listing. */
+
+router.get('/test', function (req, res, next) {
+    logger.log('GET test/');
+
+    var data = {
+        eventName: 'Neverland party'
+    }
+
+    var renderOptions = {};
+
+    ejs.renderFile('./views/registeremail.ejs', data, renderOptions, (err, renderedHtml) => {
+        // str => Rendered HTML string
+        if (err){
+            logger.log('Unable to render registeremail.ejs');
+            logger.log(err);
+            return;
+        }
+
+        mail.sendMail('sevick.v@gmail.com','Mailer test',renderedHtml)
+            .then(()=>{
+                logger.log('Mail sent');
+            })
+            .catch((err)=>{
+                logger.log('Mail send error:');
+                logger.log(err);
+            });
+    });
+});
+
+
+
 router.get('/', function (req, res, next) {
     logger.log('GET register/   ' + req.query.id);
 
