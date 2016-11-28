@@ -19,6 +19,7 @@
     "nodemailer": "^2.6.4",
     "promisify": "0.0.3",
     "q": "^1.4.1",
+    "rmdir": "^1.2.0",
     "serve-favicon": "^2.3.2"
   }
 }

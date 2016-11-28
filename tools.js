@@ -51,3 +51,23 @@ exports.checkCreateDir = function(path) {
     });
     return deferred.promise;
 }
+
+
+exports.rmDir = function(dirPath){
+    var deferred = q.defer();
+    rmdir(dirPath, (err, dirs, files) => {
+        logger.log('Directory removed: ' + dirPath);
+        if (err) {
+            deferred.reject(err);
+            return;
+        }
+        fs.rmdir(dirPath, (err) => {
+            if (err){
+                deferred.reject(err);
+                return;
+            }
+            deferred.resolve();
+        });
+    });
+    return deferred.promise;
+}

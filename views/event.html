@@ -60,7 +60,7 @@
 
                     <div class="form-group col-md-12">
                         <label for="info">Event description</label>
-                        <textarea class="form-control" rows="5" name="info" id="info"></textarea>
+                        <textarea class="form-control" rows="5" name="info" id="info" maxlength="450"></textarea>
                     </div>
 
 
@@ -85,12 +85,32 @@
                 </div>
 
 
-                <input type="hidden" name="uploadedFiles">
+                <div class="col-md-12">
+                    <label>Fields, that participants should complete to register</label>
+                    <div class="row">
+                        <div class="col-md-1"></div>
+                        <div class="col-md-11">
+                            <input type="text" class="form-control" name="fields_1" required="true" maxlength="45"
+                                   value="email" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 addfield">
+                    <button type="button" class="btn btn-default pull-right" aria-label="Add field">
+                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+
+                <input type="hidden" name="uploadedFilesArray">
                 <input type="hidden" name="eventRandomHash">
                 <input type="hidden" name="eventId">
 
 
-                <button type="submit" class="btn btn-primary pull-right">Submit</button>
+                <div class="col-md-12 addfield">
+                    <button type="submit" class="btn btn-primary pull-right">Submit</button>
+                </div>
 
             </form>
 
@@ -101,8 +121,8 @@
 <script type="text/javascript" src="/js/common.js"></script>
 <script type="text/javascript" src="/js/event.js"></script>
 <script type="text/javascript">
-    var eventRandomHash=Math.random().toString(36).substring(2,10);
-    eventRandomHash=eventRandomHash+Date.now();
+    var eventRandomHash = Math.random().toString(36).substring(2, 10);
+    eventRandomHash = eventRandomHash + Date.now();
     //console.log(eventRandomHash);
 
     var eventImages = [];
@@ -111,28 +131,28 @@
     Dropzone.options.myDropzone = {
         paramName: "file", // The name that will be used to transfer the file
         maxFilesize: 1024, // MB
-        url: "/event/file-upload?hash="+eventRandomHash,
+        url: "/event/file-upload?hash=" + eventRandomHash,
         acceptedFiles: 'image/*',
         addRemoveLinks: true,
         autoProcessQueue: true,
         dictDefaultMessage: "Click to add images<br>Or drag&drop them here (max size - 1MB)",
         init: function () {
             this.on("success", function (file) {
-                console.log("Images added: ");
-                console.log(file);
-                eventImages.push(file);
+                //console.log("Images added: ");
+                //console.log(file);
+                eventImages.push(file.name);
             });
             this.on("removedfile", function (file) {
-                console.log("Images removed: ");
-                console.log(file);
+                console.log('removedfile:');
+                console.log(file.name);
+                eventImages.splice(eventImages.indexOf(file.name), 1);
             });
         },
     };
 
-
     $('#eventForm').on('submit', function (event) {
         event.preventDefault();
-        $('input[name="uploadedFiles"]').val(JSON.stringify(eventImages));
+        $('input[name="uploadedFilesArray"]').val(JSON.stringify(eventImages));
         $('input[name="eventRandomHash"]').val(eventRandomHash);
         $.post({
             url: '/event/newevent',
@@ -143,10 +163,10 @@
                 // if success, HTML response is expected, so replace current
                 if (textStatus === 'success') {
                     /*
-                    var newDoc = document.open('text/html', 'replace');
-                    newDoc.write(data);
-                    newDoc.close();
-                    */
+                     var newDoc = document.open('text/html', 'replace');
+                     newDoc.write(data);
+                     newDoc.close();
+                     */
                     console.log(data);
                     redirect(data.redirect);
                 }

@@ -12,6 +12,7 @@ var favicon = require('serve-favicon');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var q = require('q');
+var rmdir = require('rmdir');
 
 
 var router = express.Router();
@@ -28,32 +29,34 @@ function sendEventCreateHtml(req, res) {
 
 
 router.post('/newevent', function (req, res) {
-    logger.log("GET /newevent");
-    logger.log(req.body.uploadedFiles);
+    logger.log("POST /newevent");
+
+    var imagesArray = JSON.parse(req.body.uploadedFilesArray);
 
     db.connection.query("INSERT INTO event (NAME,DT,REGSTART,REGEND,INFO,PRICE,CURRENCY,MINMEMBERS,MAXMEMBERS) VALUES (?,?,?,?,?,?,?,?,?)", [[req.body.eventname], new Date([req.body.eventdate]), new Date([req.body.regstart]), new Date([req.body.regend]), [req.body.info], [req.body.price], [req.body.currency], [req.body.minmembers], [req.body.maxmembers]])
         .on('result', function (row) {
             logger.log("Row inserted to events  id=" + row.insertId);
-            var dirPath = './uploads/' + req.body.eventRandomHash + '/';
-            fs.readdir(dirPath, function (err, files) {
-                if (!err) {
-                    for (var i = 0; i < files.length; i++) {
-                        uploadImgToDb(dirPath + files[i], row.insertId);
-                    }
-                }
-                else {
-                    logger.log('Error loading files to db');
-                    logger.log(err);
-                }
-            });
+            var eventId = row.insertId;
 
-            //res.set("Content-Type", "text/plain");
-            var response = {
-                eventId: row.insertId,
-                host: req.protocol + '://' + req.get('host'),
-                redirect: req.protocol + '://' + req.get('host') + '/invite?id=' + row.insertId
-            };
-            res.send(response);
+            var dirPath = './uploads/' + req.body.eventRandomHash;
+            moveImagesToDb(eventId, dirPath+'/',imagesArray)
+                .then(() => {
+                    logger.log('Images moved to db');
+                    var responsedata = {
+                        eventId: row.insertId,
+                        host: req.protocol + '://' + req.get('host'),
+                        redirect: req.protocol + '://' + req.get('host') + '/invite?id=' + row.insertId
+                    };
+                    res.send(responsedata);
+                })
+                .catch((err) => {
+                    logger.log('Error while moving images to db');
+                    logger.log(err);
+                    var responsedata = {
+                        err: err,
+                    };
+                    res.send(responsedata);
+                });
         })
         .on('error', function (err) {
             logger.log("Error while inserting into event");
@@ -123,22 +126,46 @@ router.get('/image', function (req, res) {
 });
 
 
+function moveImagesToDb(eventId, dirPath, images){
+    logger.log('moving images to db...');
+    
+    var deferred = q.defer();
+    var promises=images.map(img => uploadImgToDb(dirPath+img,eventId));
+    q.all(promises)
+        .then(()=>{
+            deferred.resolve();
+        })
+        .catch((err)=>{
+            deferred.reject(err);
+        })
+    return deferred.promise;
+}
+
+
 function uploadImgToDb(path, eventId) {
+    logger.log('uploading img to db: '+path);
+
     var deferred = q.defer();
     var fileName = path.replace(/^.*[\\\/]/, '');
     tools.getFilesize(path)
         .then(function (fileSize) {
             fs.open(path, 'r', function (status, fd) {
-                logger.log("File opened");
                 if (status) {
-                    console.log(status.message);
+                    logger.log(status.message);
+                    deferred.reject(status);
                     return;
                 }
                 var buffer = new Buffer(fileSize);
                 fs.read(fd, buffer, 0, fileSize, 0, function (err, num) {
+                    if (err){
+                        logger.log(err);
+                        deferred.reject(err);
+                        return;
+                    }
                     db.connection.query("INSERT INTO eventimg (EVENTID, NAME, IMG) VALUES (?,?,?)", [eventId, fileName, buffer])
                         .on('result', function (row) {
                             deferred.resolve();
+                            return;
                         })
                         .on('error', function (err) {
                             logger.log("Error while inserting into eventimg");

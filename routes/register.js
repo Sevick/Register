@@ -63,6 +63,7 @@ router.get('/', function (req, res, next) {
         db.connection.query(queryEventData, req.query.id)
             .on('result', function (row) {
                 logger.log("Data retrieved from db for event with id=" + req.query.id);
+                logger.log(row);
                 logger.log(row.fields);
                 rows.push(row);
                 var result={
@@ -132,7 +133,7 @@ function insertEventmember(memberData) {
 
                 conn.query('INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)', [memberData.eventId,confirmCode,memberData['email']], function (err, result) {
                     if (err) {
-                        console.log(err);
+                        logger.log(err);
                         return conn.rollback(function () {
                             deferred.reject(err);
                         });
