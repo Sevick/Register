@@ -18,30 +18,52 @@
             crossorigin="anonymous"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/memberslist.css">
+
+    <style>
+        .narrow-col{
+            width: 2vw;
+            text-align: center;
+        }
+        .my-table-cls{
+            text-align: center;
+        }
+
+    </style>
 </head>
 <body>
 
-    <div class="container" id="eventData">
-        <table id="membersListTable" class="table-bordered table-hover">
-            <tr>
-                <% for (var key in memberslist[0]) {
-                     if (key != "eventid" && key != "memberid") {%>
-                        <td><%= key %></td>
-                <%}  } %>
-                <td>del</td>
-            </tr>
-
-            <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
+    <div class="container container-fluid" id="eventData">
+        <div class="row">
+            <div class="col-xs-10">
+                <h2>Event # 666</h2>
+            </div>
+        </div>
+        <div>
+            <table id="membersListTable" class="my-table-cls table-hover table-striped table-condensed col-xs-10">
                 <tr>
-                    <% for (var fieldIdx  in memberslist[memberIdx]) {
-                        if (fieldIdx != "eventid" && fieldIdx != "memberid"){%>
-                            <td><%= (memberslist[memberIdx])[fieldIdx] %></td>
-                    <%} } %>
-                    <td>
-                        <span class="glyphicon glyphicon-remove-circle delMember" memberid="<%= memberslist[memberIdx]['memberid'] %>"></span>
-                    </td>
-            <% } %>
-        </table>
+                    <td>#</td>
+                    <% for (var key in memberslist[0]) {
+                         if (key != "eventid" && key != "memberid") {%>
+                            <td><%= key %></td>
+                    <%}  } %>
+                    <td class="narrow-col">del</td>
+                </tr>
+
+                <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
+                    <tr>
+                        <td>
+                            <%= memberIdx +1 %>
+                        </td>
+                        <% for (var fieldIdx  in memberslist[memberIdx]) {
+                            if (fieldIdx != "eventid" && fieldIdx != "memberid"){%>
+                                <td><%= (memberslist[memberIdx])[fieldIdx] %></td>
+                        <%} } %>
+                        <td class="col-xs-1 delspan">
+                            <span class="glyphicon glyphicon-remove-circle delMember" memberid="<%= memberslist[memberIdx]['memberid'] %>"></span>
+                        </td>
+                <% } %>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -50,7 +72,7 @@
             console.log(memberId2Del);
             $(this).parent().parent().remove();
 
-            // POST to delite from base
+            // POST to delete from base
 
             $.post({
                 url: '/memberslist/delmember',
