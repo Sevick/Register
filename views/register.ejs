@@ -29,21 +29,22 @@
         <div id="eventImgs" class="col-md-3">
         </div>
 
-        <div class="col-md-8 captiontext">
-            <div class="vcenter">
+        <div class="col-md-9 captiontext">
+            <div>
                 <div class="eventName">
-                    <h1>Register for <%= eventdata.name %></h1>
-                </div>
-                <div>
+                    Register for <%= eventdata.name %>
                     <span id="eventDate"></span>
                 </div>
-                <br>
+                <div id="eventInfo">
+                    <%= eventdata.info %>
+                </div>
                 <div>
                     Registration ends on <span id="regEndDate"></span>
                 </div>
-                <div id="eventDate">
+                <div>
                     <%= eventdata.vacancies %> vacant places left
                 </div>
+
 
             </div>
         </div>
@@ -82,9 +83,13 @@
         eventImgs = [];
     }
 
+    var eventInfo= "<%= eventdata.info %>";
+
     console.log(eventImgs);
 
-    var fieldsJSON="<%- eventdata.fields %>";
+    var fields='<%- eventdata.fields %>';
+    var fieldsJSON=fields==="" ? {} : JSON.parse(fields);
+    //var fieldsJSON='<%- eventdata.fields %>';
     setupDoc(fieldsJSON);
 
 

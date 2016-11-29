@@ -9,6 +9,12 @@
     margin-bottom: 3em;
 }
 
+#eventInfo{
+    margin-top: 1em;
+    margin-bottom: 1em;
+    font-weight: 500;
+}
+
 /*#eventDate{
     margin-top: 1em;
 }*/
