@@ -20,11 +20,14 @@
     <link rel="stylesheet" type="text/css" href="/css/memberslist.css">
 
     <style>
-        .narrow-col{
-            width: 2vw;
+        .my-tbl-header {
+            text-transform: uppercase;
             text-align: center;
+            font-weight: 700;
         }
-        .my-table-cls{
+        .delMember, .num-rows, .delspan{
+            color: red;
+            font-weight: 700;
             text-align: center;
         }
 
@@ -33,36 +36,38 @@
 <body>
 
     <div class="container container-fluid" id="eventData">
-        <div class="row">
-            <div class="col-xs-10">
-                <h2>Event # 666</h2>
+        <div class="row panel panel-primary">
+            <div class="panel-heading">
+                <h1 class="panel-title">Event # 666</h1>
             </div>
         </div>
-        <div>
-            <table id="membersListTable" class="my-table-cls table-hover table-striped table-condensed col-xs-10">
-                <tr>
-                    <td>#</td>
-                    <% for (var key in memberslist[0]) {
-                         if (key != "eventid" && key != "memberid") {%>
-                            <td><%= key %></td>
-                    <%}  } %>
-                    <td class="narrow-col">del</td>
-                </tr>
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2 col-xs-12">
+                <table id="membersListTable" class="table table-hover table-striped table-condensed">
+                    <tr class="my-tbl-header">
+                        <td class="col-md-1">#</td>
+                        <% for (var key in memberslist[0]) {
+                             if (key != "eventid" && key != "memberid") {%>
+                                <td><%= key %></td>
+                        <%}  } %>
+                        <td class="col-md-1 narrow-col">del</td>
+                    </tr>
 
-                <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
-                    <tr>
-                        <td>
-                            <%= memberIdx +1 %>
-                        </td>
-                        <% for (var fieldIdx  in memberslist[memberIdx]) {
-                            if (fieldIdx != "eventid" && fieldIdx != "memberid"){%>
-                                <td><%= (memberslist[memberIdx])[fieldIdx] %></td>
-                        <%} } %>
-                        <td class="col-xs-1 delspan">
-                            <span class="glyphicon glyphicon-remove-circle delMember" memberid="<%= memberslist[memberIdx]['memberid'] %>"></span>
-                        </td>
-                <% } %>
-            </table>
+                    <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
+                        <tr>
+                            <td class="num-rows">
+                                <%= memberIdx +1 %>
+                            </td>
+                            <% for (var fieldIdx  in memberslist[memberIdx]) {
+                                if (fieldIdx != "eventid" && fieldIdx != "memberid"){%>
+                                    <td><%= (memberslist[memberIdx])[fieldIdx] %></td>
+                            <%} } %>
+                            <td class="col-xs-1 delspan">
+                                <span class="glyphicon glyphicon-remove-circle delMember" memberid="<%= memberslist[memberIdx]['memberid'] %>"></span>
+                            </td>
+                    <% } %>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -81,13 +86,7 @@
                 success: function (data, textStatus, jqXHR) {
                     // if success, HTML response is expected, so replace current
                     if (textStatus === 'success') {
-                        /*
-                         var newDoc = document.open('text/html', 'replace');
-                         newDoc.write(data);
-                         newDoc.close();
-                         */
                         console.log(data);
-//                        redirect(data.redirect);
                     }
                 }
             }).fail(function (jqXHR, textStatus, errorThrown) {

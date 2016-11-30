@@ -21,8 +21,6 @@ router.post('/delmember', function (req, res) {
 
     db.connection.query("DELETE FROM register.eventmember WHERE memberid=?", [req.body.memberid])
         .on('result', function (dbQeryRes) {
-            logger.log("on result");
-            logger.log(dbQeryRes);
             res.end("deleted");
         })
         .on('error', function (err) {
@@ -59,6 +57,7 @@ router.get('/', function (req, res) {
         })
         .then((rows) => {
             logger.log("then #3 rows");
+            conn.release();
             var result = {
                 eventId: eventId,
                 memberslist: rows
