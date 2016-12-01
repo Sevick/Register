@@ -20,95 +20,58 @@
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
     <script src="/js/serializejson/jquery.serializejson.min.js"></script>
 
+    <script src="/js/eventdata.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="./css/eventdata.css">
     <link rel="stylesheet" type="text/css" href="./css/register.css">
 </head>
 <body>
 
-<div class="container" id="eventData">
-    <div class="row">
-        <div id="eventImgs" class="col-md-3">
-        </div>
-
-        <div class="col-md-9 captiontext">
-            <div>
-                <div class="eventName">
-                    Register for <%= eventdata.name %>
-                    <span id="eventDate"></span>
-                </div>
-                <div id="eventInfo">
-                    <%= eventdata.info %>
-                </div>
-                <div>
-                    Registration ends on <span id="regEndDate"></span>
-                </div>
-                <div>
-                    <%= eventdata.vacancies %> vacant places left
-                </div>
-
-
-            </div>
-        </div>
-
-        <div class="col-md-1">
-        </div>
-    </div>
-</div>
 
 <div class="container">
-    <form method="post" action="#" id="registerForm">
 
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required="true">
-        </div>
+    <%- include eventdata.ejs %>
 
-        <div id="inputsContainer">
-        </div>
+    <div class="panel-body">
 
-        <input type="hidden" name="eventId">
-        <button type="submit" class="btn btn-primary pull-right">Register</button>
-    </form>
+        <form method="post" action="#" id="registerForm">
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required="true">
+            </div>
+
+            <div id="inputsContainer">
+            </div>
+
+            <input type="hidden" name="eventId">
+            <button type="submit" class="btn btn-primary pull-right">Register</button>
+        </form>
+    </div>
 </div>
 
 <script type="text/javascript" src="js/common.js"></script>
 <script type="text/javascript" src="js/register.js"></script>
 <script type="text/javascript">
 
-    var eventId = "<%= eventdata.id %>";
-    var eventDt = new Date("<%= eventdata.dt %>");
-    var regEndDt = new Date("<%= eventdata.regend %>");
-    var eventImgsList = "<%= eventdata.imgslist %>";
-    var eventImgs = eventImgsList.split('|');
-    if (eventImgsList===""){
-        eventImgs = [];
-    }
 
-    var eventInfo= "<%= eventdata.info %>";
+    var eventdata = '<%- JSON.stringify(eventdata) %>';
+    //console.log(eventdata);
+    setupEventData(JSON.parse(eventdata));
 
-    console.log(eventImgs);
+    //var fields='<%- eventdata.fields %>';
+    //var fieldsJSON=fields==="" ? {} : JSON.parse(fields);
 
-    var fields='<%- eventdata.fields %>';
-    var fieldsJSON=fields==="" ? {} : JSON.parse(fields);
-    //var fieldsJSON='<%- eventdata.fields %>';
-    setupDoc(fieldsJSON);
-
-
-    $("#eventDate").html(eventDt.toLocaleDateString() + "&nbsp&nbsp" + eventDt.toLocaleTimeString());
-    $("#regEndDate").html(regEndDt.toLocaleDateString() + "&nbsp&nbsp" + regEndDt.toLocaleTimeString());
-
-    var imgTemplate = '<img src="%IMGSRC%" class="img-responsive center-block">';
-    //var imgTemplate = '<img src="%IMGSRC%" class="eventImg">';
-    if (eventImgs && eventImgs.length > 0) {
-        var imgHTML = imgTemplate.replace("%IMGSRC%", 'http://localhost:3001/event/image?id=' + eventId + '&img=' + eventImgs[0]);
-        console.log(imgHTML);
-        $("#eventImgs").html(imgHTML);
-    }
+    var fieldsJSON = '<%- JSON.stringify(fields) %>';
+    var fields = JSON.parse(fieldsJSON);
+    console.log(fields);
+    setupDoc(fields);
 
     $('#registerForm').on('submit', function (event) {
         event.preventDefault();
         $('input[name="eventId"]').val(eventId);
         $.post({
-            url: '/register?id='+eventId,
+            url: '/register?id=' + eventId,
             type: 'post',
             data: $('#registerForm').serializeJSON(),
             //data: $(this).serialize(),

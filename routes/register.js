@@ -34,17 +34,17 @@ router.get('/test', function (req, res, next) {
 
     ejs.renderFile('./views/registeremail.ejs', data, renderOptions, (err, renderedHtml) => {
         // str => Rendered HTML string
-        if (err){
+        if (err) {
             logger.log('Unable to render registeremail.ejs');
             logger.log(err);
             return;
         }
 
-        mail.sendMail('sevick.v@gmail.com','Mailer test',renderedHtml)
-            .then(()=>{
+        mail.sendMail('sevick.v@gmail.com', 'Mailer test', renderedHtml)
+            .then(()=> {
                 logger.log('Mail sent');
             })
-            .catch((err)=>{
+            .catch((err)=> {
                 logger.log('Mail send error:');
                 logger.log(err);
             });
@@ -52,40 +52,55 @@ router.get('/test', function (req, res, next) {
 });
 
 
-
 router.get('/', function (req, res, next) {
     logger.log('GET register/   ' + req.query.id);
 
-    if (req.query.id) {
-
-        logger.log('Quering database...');
-        var rows = [];
-        db.connection.query(queryEventData, req.query.id)
-            .on('result', function (row) {
-                logger.log("Data retrieved from db for event with id=" + req.query.id);
-                logger.log(row);
-                logger.log(row.fields);
-                rows.push(row);
-                var result={
-                    eventdata : row
-                }
-                res.render('register', result);
-            })
-            .on('end', function () {
-                logger.log('Query finished');
-                if (rows.length < 1) {
-                    logger.log("No data found. Invalid event id");
-                }
-            })
-            .on('error', function (err) {
-                logger.log("Error while quering data from eventdata");
-                logger.log(err);
-            });
-    }
-    else {
+    if (!req.query.id) {
         logger.log("event id not specified");
         res.send('event id not specified');
+        return;
     }
+
+
+    db.getEventData(req.query.id)
+        .then((result) => {
+            res.render('register', result);
+        })
+        .catch((err) => {
+            logger.log(err);
+            res.send(err);
+        })
+
+    /*
+     logger.log('Quering database...');
+     var rows = [];
+
+     db.connection.query(queryEventData, req.query.id)
+     .on('result', function (row) {
+     logger.log("Data retrieved from db for event with id=" + req.query.id);
+     logger.log(row);
+     rows.push(row);
+     var fields=JSON.parse(row.fields);
+     delete row.fields;
+     logger.log(row);
+     var result={
+     eventdata : row,
+     fields: fields
+     }
+     res.render('register', result);
+     })
+     .on('end', function () {
+     logger.log('Query finished');
+     if (rows.length < 1) {
+     logger.log("No data found. Invalid event id");
+     }
+     })
+     .on('error', function (err) {
+     logger.log("Error while quering data from eventdata");
+     logger.log(err);
+     });
+     */
+
 });
 
 router.post('/', function (req, res, next) {
@@ -96,7 +111,7 @@ router.post('/', function (req, res, next) {
         insertEventmember(req.body)
             .then(function () {
                 logger.log("Data sumbitted to db");
-                sendRegistered(req,res, req.query.id);
+                sendRegistered(req, res, req.query.id);
             })
             .catch((err) => {
                 logger.log("Failed to submit data to db");
@@ -122,16 +137,16 @@ function insertEventmember(memberData) {
                     return;
                 }
 
-                if (!memberData['email']){
+                if (!memberData['email']) {
                     logger.log(memberData);
                     deferred.reject('Email not specified');
                     return;
                 }
 
-                var confirmCode=Math.random().toString(36).substring(2,10);
-                confirmCode=confirmCode+Date.now();
+                var confirmCode = Math.random().toString(36).substring(2, 10);
+                confirmCode = confirmCode + Date.now();
 
-                conn.query('INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)', [memberData.eventId,confirmCode,memberData['email']], function (err, result) {
+                conn.query('INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)', [memberData.eventId, confirmCode, memberData['email']], function (err, result) {
                     if (err) {
                         logger.log(err);
                         return conn.rollback(function () {
@@ -155,6 +170,7 @@ function insertEventmember(memberData) {
                                 if (err) {
                                     conn.rollback(function () {
                                         deferred.reject(err);
+                                        conn.release();
                                         return;
                                     });
                                 }
@@ -198,7 +214,7 @@ function insertmemberData(conn, memberId, fieldId, fieldData) {
     return deferred.promise;
 }
 
-function sendRegistered(req,res, eventId){
+function sendRegistered(req, res, eventId) {
     var response = {
         host: req.protocol + '://' + req.get('host'),
         redirect: req.protocol + '://' + req.get('host') + '/registered?id=' + eventId

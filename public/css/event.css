@@ -32,14 +32,14 @@ body{
     text-align: center;
 }
 
-.addfield{
-
+#addfield{
+    margin-top: 1em;
 }
 
 .customFieldDiv{
     margin-top: 2em;
 }
 
-.sumbit{
-
+#sumbit{
+    margin-top: 1em;
 }

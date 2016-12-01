@@ -17,30 +17,17 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
 
+    <script src="/js/eventdata.js"></script>
+    <link rel="stylesheet" type="text/css" href="./css/eventdata.css">
+
     <link rel="stylesheet" type="text/css" href="/css/memberslist.css">
-
-    <style>
-        .my-tbl-header {
-            text-transform: uppercase;
-            text-align: center;
-            font-weight: 700;
-        }
-        .delMember, .num-rows, .delspan{
-            color: red;
-            font-weight: 700;
-            text-align: center;
-        }
-
-    </style>
 </head>
 <body>
 
-    <div class="container container-fluid" id="eventData">
-        <div class="row panel panel-primary">
-            <div class="panel-heading">
-                <h1 class="panel-title">Event # 666</h1>
-            </div>
-        </div>
+    <div class="container container-fluid">
+
+        <%- include eventdata.ejs %>
+
         <div class="row">
             <div class="col-md-8 col-md-offset-2 col-xs-12">
                 <table id="membersListTable" class="table table-hover table-striped table-condensed">
@@ -72,6 +59,12 @@
     </div>
 
     <script>
+        var eventdata = '<%- JSON.stringify(eventdata) %>';
+        setupEventData(JSON.parse(eventdata));
+        var fieldsJSON = '<%- JSON.stringify(fields) %>';
+        var fields = JSON.parse(fieldsJSON);
+
+
         var onDel = function (){
             memberId2Del = {memberid : this.getAttribute('memberid')};
             console.log(memberId2Del);

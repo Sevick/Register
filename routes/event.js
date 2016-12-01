@@ -30,6 +30,7 @@ function sendEventCreateHtml(req, res) {
 
 router.post('/newevent', function (req, res) {
     logger.log("POST /newevent");
+    logger.log(req.body);
 
     var imagesArray = JSON.parse(req.body.uploadedFilesArray);
 
@@ -143,7 +144,7 @@ function moveImagesToDb(eventId, dirPath, images){
 
 
 function uploadImgToDb(path, eventId) {
-    logger.log('uploading img to db: '+path);
+    logger.log('uploadImgToDb: '+path);
 
     var deferred = q.defer();
     var fileName = path.replace(/^.*[\\\/]/, '');

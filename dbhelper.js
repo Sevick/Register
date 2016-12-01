@@ -5,7 +5,7 @@
 "use strict";
 
 var q = require('q');
-var mysql  = require('mysql');
+var mysql = require('mysql');
 
 var pool = mysql.createPool(cfg.getParam('dbconfig')); // http://stackoverflow.com/questions/18496540/node-js-mysql-connection-pooling
 
@@ -48,45 +48,129 @@ exports.connection = {
     }
 };
 
-exports.getConnection = function(){
+exports.getConnection = getConnection;
+exports.getEventData = getEventData;
+exports.getMembersData = getMembersData;
+
+//-----------------------------------------------------------------------------------------------------------------
+function getConnection() {
     var deferred = q.defer();
     pool.getConnection(function (err, conn) {
         if (err) {
             deferred.reject(err);
         }
-        else{
+        else {
             deferred.resolve(conn);
         }
     });
     return deferred.promise;
 };
 
-
-exports.getEventData = function(eventId){
+//-----------------------------------------------------------------------------------------------------------------
+function getEventData(eventId) {
     var deferred = q.defer();
-
+    logger.log('getEventData quering database...');
     getConnection()
-        .then((conn) =>{
+        .then((conn) => {
             conn.query(queryEventData, eventId, (err, result) => {
-                if (err){
+                conn.release();
+                if (err) {
                     deferred.reject(err);
                     return;
                 }
-                if (result.length<1){
-                    deferred.reject("No data found");
+                if (result.length < 1) {
+                    deferred.reject('No data found');
                     return;
                 }
-                if (result.length>1){
-                    deferred.reject("Too many rows");
+                if (result.length > 1) {
+                    deferred.reject('Too many rows');
                     return;
                 }
-                deferred.resolve(result[0]);
+
+                try {
+                    var fields = JSON.parse(result[0].fields);
+                    delete result[0].fields;
+                    logger.log(result[0]);
+                    var result = {
+                        eventdata: result[0],
+                        fields: fields
+                    }
+                    deferred.resolve(result);
+                }
+                catch (err) {
+                    logger.log('Error on processing data in getEventData for event ' + eventId);
+                    logger.log(err);
+                    deferred.reject(err);
+                }
+
             })
         })
-        .catch((err)=>{
+        .catch((err)=> {
             deferred.reject(err);
         })
     return deferred.promise;
 }
 
 
+//-----------------------------------------------------------------------------------------------------------------
+function getMembersData(eventId){
+    var deferred = q.defer();
+    var conn;
+    
+    logger.log('getMembersData quering database...');
+    db.getConnection()
+        .then((connection) => {
+            conn=connection;
+            return getSqlForDataRetrive(conn, eventId);
+        })
+        .then((sqltext) => {
+            return getMemebersListData(conn, eventId, sqltext);
+        })
+        .then((rows) => {
+            conn.release();
+            deferred.resolve(rows);
+        })
+        .catch((err)=> {
+            if (conn)
+                conn.release();
+            logger.log('Error accuired while getMembersData retriving data from database');
+            logger.log(err);
+            deferred.reject(err);
+        })
+
+    return deferred.promise;
+}
+
+function getSqlForDataRetrive(conn, eventId) {
+    var deferred = q.defer();
+    conn.query("SELECT pivotsql FROM v_pivotdata WHERE eventid=?", [eventId], function (err, result) {
+        if (err) {
+            console.log(err);
+            deferred.reject(err);
+            return;
+        }
+        logger.log("Pivot sql: ");
+        logger.log(result[0].pivotsql);
+        deferred.resolve(result[0].pivotsql);
+    })
+    return deferred.promise;
+}
+
+
+function getMemebersListData(conn, eventId, sqltext) {
+    var deferred = q.defer();
+
+    var rows = [];
+    conn.query(sqltext, [eventId], (err,result)=>{
+        if (err){
+            logger.log(err);
+            deferred.reject(err);
+            return;
+        }
+        deferred.resolve(result);
+    })
+
+    return deferred.promise;
+}
+
+//-----------------------------------------------------------------------------------------------------------------

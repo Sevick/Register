@@ -89,36 +89,27 @@
                     <label>Fields, that participants should complete to register</label>
                     <div class="row">
                         <div class="col-md-11 col-md-offset-1">
-                            <input type="text" class="form-control" name="fields_1" required="true" maxlength="45"
+                            <input type="text" class="form-control" name="email" required="true" maxlength="45"
                                    value="email" readonly>
                         </div>
                     </div>
 
-                    <div id="newFieldTemplate" class="customFieldDiv" style="display: block">
-                        <div class="col-md-11 col-md-offset-1 input-group">
-                            <input type="text" class="form-control customField" required="true" maxlength="45">
-                            <span class="input-group-btn">
-                                <button type="button" class="btn btn-default pull-right removeFieldButton"
-                                        aria-label="Remove field">
-                                    <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
-                                </button>
-                                </span>
-                        </div>
-                    </div>
+
+                </div>
+
+                <div class="col-md-12 col-xs-12" id="addfield">
+
+                    <button type="button" class="btn btn-default pull-right" id="addFieldButton"
+                            aria-label="Add field">
+                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    </button>
+
                 </div>
 
 
-                    <div class="col-md-12 addfield">
-                        <button type="button" class="btn btn-default pull-right" id="addFieldButton"
-                                aria-label="Add field">
-                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                        </button>
-                    </div>
-
-
-                    <div class="col-md-12 sumbit">
-                        <button type="submit" class="btn btn-primary pull-right">Create event</button>
-                    </div>
+                <div class="col-md-12 col-xs-12" id="sumbit">
+                    <button type="submit" class="btn btn-primary pull-right">Create event</button>
+                </div>
 
 
                 <input type="hidden" name="uploadedFilesArray">
@@ -126,6 +117,18 @@
                 <input type="hidden" name="eventId">
             </form>
 
+
+            <div id="newFieldTemplate" class="customFieldDiv" style="display: none">
+                <div class="col-md-11 col-md-offset-1 input-group">
+                    <input type="text" class="form-control customField" id="template" required="true" maxlength="45">
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default pull-right removeFieldButton"
+                                        aria-label="Remove field">
+                                    <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                                </button>
+                                </span>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -149,10 +152,11 @@
     function addField() {
 
         var newId = 'customField_' + cutomFieldsCount++;
-        var newField = $('#newFieldTemplate').clone().prop('id', newId).show();
+        var newField = $('#newFieldTemplate').clone().prop('id', 'div' + newId).show();
         console.log(newField);
         $('#eventFields').append(newField);
-        $('#' + newId).addClass("customFieldDiv");
+        $('#div' + newId).addClass("customFieldDiv");
+        $('#div' + newId).find('#template').prop('id', newId).prop('name', newId);
     }
 
 
