@@ -2,19 +2,38 @@
     margin-top: 50px;
 }
 
-#membersListTable{
-    margin-top: 50px;
-    margin-bottom: 20px;
+#membersTable{
+    margin-bottom: 0;
+
 }
 
-.my-tbl-header {
+
+.membersTableHeader {
     text-transform: uppercase;
     text-align: center;
     font-weight: 700;
+
+}
+
+.membersDataRow td{
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+}
+
+
+.membersTableHeader td{
+    vertical-align: middle !important;
+    height: 4em;
+}
+
+
+.delMember{
+    cursor: pointer;
 }
 
 .delMember, .num-rows, .delspan{
     color: red;
     font-weight: 700;
     text-align: center;
+
 }

@@ -5,6 +5,7 @@
 
 function setupEventData(eventdata) {
 
+
     var eventId = eventdata.id;
     var eventDt = new Date(eventdata.dt);
     var regEndDt = new Date(eventdata.regend);
@@ -24,12 +25,14 @@ function setupEventData(eventdata) {
     console.log(eventImgs);
     
     var imgTemplate = '<img src="%IMGSRC%" class="img-responsive center-block">';
-    //var imgTemplate = '<img src="%IMGSRC%" class="eventImg">';
+
+/*
     if (eventImgs && eventImgs.length > 0) {
         var imgHTML = imgTemplate.replace("%IMGSRC%", 'http://localhost:3001/event/image?id=' + eventId + '&img=' + eventImgs[0]);
         console.log(imgHTML);
         $("#eventImgs").html(imgHTML);
     }
+*/
 
 
 }

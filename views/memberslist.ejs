@@ -24,24 +24,24 @@
 </head>
 <body>
 
-    <div class="container container-fluid">
+    <div class="container">
 
         <%- include eventdata.ejs %>
 
         <div class="row">
-            <div class="col-md-8 col-md-offset-2 col-xs-12">
-                <table id="membersListTable" class="table table-hover table-striped table-condensed">
-                    <tr class="my-tbl-header">
+            <div class="col-md-12 col-xs-12">
+                <table id="membersTable" class="table table-hover table-striped table-condensed table-bordered">
+                    <tr class="membersTableHeader">
                         <td class="col-md-1">#</td>
                         <% for (var key in memberslist[0]) {
                              if (key != "eventid" && key != "memberid") {%>
                                 <td><%= key %></td>
                         <%}  } %>
-                        <td class="col-md-1 narrow-col">del</td>
+                        <td class="col-md-1 narrow-col"></td>
                     </tr>
 
                     <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
-                        <tr>
+                        <tr class="membersDataRow">
                             <td class="num-rows">
                                 <%= memberIdx +1 %>
                             </td>
@@ -59,6 +59,13 @@
     </div>
 
     <script>
+
+        jQuery(document).ready(function($) {
+            $('.carousel').carousel();
+        });
+
+
+
         var eventdata = '<%- JSON.stringify(eventdata) %>';
         setupEventData(JSON.parse(eventdata));
         var fieldsJSON = '<%- JSON.stringify(fields) %>';
