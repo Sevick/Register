@@ -40,7 +40,7 @@
                     <div class="form-group col-md-6">
                         <label for="eventname">Event name</label>
                         <input type="text" class="form-control" id="eventname" name="eventname" required="true"
-                               maxlength="10">
+                               maxlength="64">
                     </div>
 
                     <div class="form-group col-md-2">
@@ -85,7 +85,7 @@
                 </div>
 
 
-                <div class="col-md-12" id="eventFields">
+                <div class="col-md-12">
                     <label>Fields, that participants should complete to register</label>
                     <div class="row">
                         <div class="col-md-11 col-md-offset-1">
@@ -93,29 +93,34 @@
                                    value="email" readonly>
                         </div>
                     </div>
-
-
-                </div>
-
-                <div class="col-md-12 col-xs-12" id="addfield">
-
-                    <button type="button" class="btn btn-default pull-right" id="addFieldButton"
-                            aria-label="Add field">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    </button>
-
-                </div>
-
-
-                <div class="col-md-12 col-xs-12" id="sumbit">
-                    <button type="submit" class="btn btn-primary pull-right">Create event</button>
                 </div>
 
 
                 <input type="hidden" name="uploadedFilesArray">
                 <input type="hidden" name="eventRandomHash">
                 <input type="hidden" name="eventId">
+                <input type="hidden" name="customFields">
+
+                <div class="col-md-12 col-xs-12" id="realSumbit" style="display: none">
+                    <button type="submit" id="realSubmitButton" class="btn btn-primary pull-right">Create event</button>
+                </div>
             </form>
+
+
+            <div class="col-md-12" id="eventFields">
+
+            </div>
+
+                <div class="col-md-12 col-xs-12" id="addfield">
+                    <button type="button" class="btn btn-default pull-right" id="addFieldButton"
+                            aria-label="Add field">
+                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="col-md-12 col-xs-12" id="sumbit">
+                    <button type="button" id="submitButton" class="btn btn-primary pull-right">Create event</button>
+                </div>
 
 
             <div id="newFieldTemplate" class="customFieldDiv" style="display: none">
@@ -146,17 +151,40 @@
     var eventImages = [];
     setupDoc();
 
+    $('.container').on('click', '.removeFieldButton', onFieldDelete); // onClick for remove additional field buttons
+    function onFieldDelete() {
+        $(this).parent().parent().parent().remove();
+    }
+
+    // evaluate hidden fields and call real sumbit
+    $('#submitButton').click(submitData);
+    function submitData(){
+        $('input[name="uploadedFilesArray"]').val(JSON.stringify(eventImages));
+        $('input[name="eventRandomHash"]').val(eventRandomHash);
+
+        var customFields = [];
+        $('input[name^="customField_"]').each(function() {
+            var nextField = {};
+            nextField.name=$(this).val();
+            nextField.mandatory=1;
+            nextField.maxlen=30;
+            nextField.mask='';
+            customFields.push(nextField);
+        });
+        $('input[name="customFields"]').val(JSON.stringify(customFields));
+
+        $('#realSubmitButton').click();
+    }
 
     $('#addFieldButton').click(addField);
 
     function addField() {
-
         var newId = 'customField_' + cutomFieldsCount++;
         var newField = $('#newFieldTemplate').clone().prop('id', 'div' + newId).show();
         console.log(newField);
         $('#eventFields').append(newField);
         $('#div' + newId).addClass("customFieldDiv");
-        $('#div' + newId).find('#template').prop('id', newId).prop('name', newId);
+        $('#div' + newId).find('#template').prop('id', newId).prop('name', newId+'[]');
     }
 
 
@@ -184,8 +212,7 @@
 
     $('#eventForm').on('submit', function (event) {
         event.preventDefault();
-        $('input[name="uploadedFilesArray"]').val(JSON.stringify(eventImages));
-        $('input[name="eventRandomHash"]').val(eventRandomHash);
+
         $.post({
             url: '/event/newevent',
             type: 'post',
@@ -212,6 +239,9 @@
         });
         return false;
     });
+
+
+
 
 </script>
 

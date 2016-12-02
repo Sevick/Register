@@ -61,7 +61,6 @@ router.get('/', function (req, res, next) {
         return;
     }
 
-
     db.getEventData(req.query.id)
         .then((result) => {
             res.render('register', result);
@@ -70,37 +69,6 @@ router.get('/', function (req, res, next) {
             logger.log(err);
             res.send(err);
         })
-
-    /*
-     logger.log('Quering database...');
-     var rows = [];
-
-     db.connection.query(queryEventData, req.query.id)
-     .on('result', function (row) {
-     logger.log("Data retrieved from db for event with id=" + req.query.id);
-     logger.log(row);
-     rows.push(row);
-     var fields=JSON.parse(row.fields);
-     delete row.fields;
-     logger.log(row);
-     var result={
-     eventdata : row,
-     fields: fields
-     }
-     res.render('register', result);
-     })
-     .on('end', function () {
-     logger.log('Query finished');
-     if (rows.length < 1) {
-     logger.log("No data found. Invalid event id");
-     }
-     })
-     .on('error', function (err) {
-     logger.log("Error while quering data from eventdata");
-     logger.log(err);
-     });
-     */
-
 });
 
 router.post('/', function (req, res, next) {

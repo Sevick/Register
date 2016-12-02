@@ -10,7 +10,7 @@ var mysql = require('mysql');
 var pool = mysql.createPool(cfg.getParam('dbconfig')); // http://stackoverflow.com/questions/18496540/node-js-mysql-connection-pooling
 
 
-var queryEventData = 'SELECT id,name,dt,regstart,regend,info,price,currency,minmembers,maxmembers, IFNULL(memberscount,0) memberscount, imgslist, vacancies, fields FROM v_eventdata WHERE id=?';
+const queryEventData = 'SELECT id,name,dt,regstart,regend,info,price,currency,minmembers,maxmembers, IFNULL(memberscount,0) memberscount, imgslist, vacancies, fields FROM v_eventdata WHERE id=?';
 
 exports.pool = pool;
 
@@ -49,8 +49,13 @@ exports.connection = {
 };
 
 exports.getConnection = getConnection;
+exports.beginTransaction = beginTransaction;
 exports.getEventData = getEventData;
 exports.getMembersData = getMembersData;
+exports.commitTransaction = commitTransaction;
+exports.rollbackTransaction = rollbackTransaction;
+
+
 
 //-----------------------------------------------------------------------------------------------------------------
 function getConnection() {
@@ -65,6 +70,42 @@ function getConnection() {
     });
     return deferred.promise;
 };
+
+function beginTransaction(conn){
+    var deferred = q.defer();
+    
+    conn.beginTransaction(function (err) {
+        if (err) {
+            deferred.reject(err);
+            return;
+        }
+        deferred.resolve();
+    });
+    
+    return deferred.promise;
+}
+
+function commitTransaction(conn) {
+    var deferred = q.defer();
+    conn.commit((err) => {
+        if (err) {
+            deferred.reject(err);
+        }
+        deferred.resolve();
+    });
+
+    return deferred.promise;
+}
+
+function rollbackTransaction(conn){
+    var deferred = q.defer();
+
+    conn.rollback(function () {
+        deferred.resolve();
+    });
+    
+    return deferred.promise;
+}
 
 //-----------------------------------------------------------------------------------------------------------------
 function getEventData(eventId) {

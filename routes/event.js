@@ -18,6 +18,9 @@ var rmdir = require('rmdir');
 var router = express.Router();
 module.exports = router;
 
+const queryInsertEventData = "INSERT INTO event (NAME,DT,REGSTART,REGEND,INFO,PRICE,CURRENCY,MINMEMBERS,MAXMEMBERS) VALUES (?,?,?,?,?,?,?,?,?)";
+
+
 router.get('/', function (req, res, next) {
     sendEventCreateHtml(req, res);
 });
@@ -30,38 +33,23 @@ function sendEventCreateHtml(req, res) {
 
 router.post('/newevent', function (req, res) {
     logger.log("POST /newevent");
-    logger.log(req.body);
+    //logger.log(req.body);
 
-    var imagesArray = JSON.parse(req.body.uploadedFilesArray);
-
-    db.connection.query("INSERT INTO event (NAME,DT,REGSTART,REGEND,INFO,PRICE,CURRENCY,MINMEMBERS,MAXMEMBERS) VALUES (?,?,?,?,?,?,?,?,?)", [[req.body.eventname], new Date([req.body.eventdate]), new Date([req.body.regstart]), new Date([req.body.regend]), [req.body.info], [req.body.price], [req.body.currency], [req.body.minmembers], [req.body.maxmembers]])
-        .on('result', function (row) {
-            logger.log("Row inserted to events  id=" + row.insertId);
-            var eventId = row.insertId;
-
-            var dirPath = './uploads/' + req.body.eventRandomHash;
-            moveImagesToDb(eventId, dirPath+'/',imagesArray)
-                .then(() => {
-                    logger.log('Images moved to db');
-                    var responsedata = {
-                        eventId: row.insertId,
-                        host: req.protocol + '://' + req.get('host'),
-                        redirect: req.protocol + '://' + req.get('host') + '/invite?id=' + row.insertId
-                    };
-                    res.send(responsedata);
-                })
-                .catch((err) => {
-                    logger.log('Error while moving images to db');
-                    logger.log(err);
-                    var responsedata = {
-                        err: err,
-                    };
-                    res.send(responsedata);
-                });
+    insertEvent(req.body)
+        .then((newEventId)=> {
+            logger.log("insertEvent done.  newEventId="+newEventId);
+            var responsedata = {
+                eventId: newEventId,
+                host: req.protocol + '://' + req.get('host'),
+                redirect: req.protocol + '://' + req.get('host') + '/invite?id=' + newEventId
+            };
+            res.send(responsedata);
         })
-        .on('error', function (err) {
-            logger.log("Error while inserting into event");
-            logger.log(err);
+        .catch((err) => {
+            var responsedata = {
+                err: err,
+            };
+            res.send(responsedata);
         });
 });
 
@@ -126,25 +114,114 @@ router.get('/image', function (req, res) {
         });
 });
 
-
-function moveImagesToDb(eventId, dirPath, images){
-    logger.log('moving images to db...');
-    
+//-----------------------------------------------------------------------------------------------------------------
+function insertEvent(eventData) {
     var deferred = q.defer();
-    var promises=images.map(img => uploadImgToDb(dirPath+img,eventId));
-    q.all(promises)
-        .then(()=>{
-            deferred.resolve();
+    var conn;
+    var eventId;
+    db.getConnection()
+        .then((dbconnect) => {
+            conn = dbconnect;
+            return db.beginTransaction(conn);
         })
-        .catch((err)=>{
+        .then(()=> {
+            logger.log('db_insertEvent');
+            return db_insertEvent(conn, eventData)
+        })
+        .then((newEventId)=> {
+            eventId = newEventId;
+            logger.log('db_insertEventFields');
+            return db_insertEventFields(conn, eventId, eventData.customFields);
+        })
+        .then(() => {
+            logger.log('db_moveImagesToDb');
+            var imagesArray = JSON.parse(eventData.uploadedFilesArray);
+            var dirPath = './uploads/' + eventData.eventRandomHash;
+            return db_moveImagesToDb(conn, eventId, dirPath + '/', imagesArray);
+        })
+        .then(()=> {
+            logger.log('commit');
+            return db.commitTransaction(conn);
+        })
+        .then(()=> {
+            logger.log('insertEvent done.   eventId='+eventId);
+            deferred.resolve(eventId);
+        })
+        .catch((err)=> {
+            if (conn) {
+                db.rollbackTransaction(conn)
+                    .then(()=> {
+                        conn.release();
+                        deferred.reject(err);
+                    })
+            }
             deferred.reject(err);
-        })
+        });
+    return deferred.promise
+}
+
+
+function db_insertEvent(conn, eventData) {
+    var deferred = q.defer();
+
+    conn.query(queryInsertEventData, [eventData.eventname, new Date(eventData.eventdate), new Date(eventData.regstart), new Date(eventData.regend), eventData.info, eventData.price, eventData.currency, eventData.minmembers, eventData.maxmembers], function (err, result) {
+        if (err) {
+            logger.log('db_insertEvent failed');
+            logger.log(err);
+            deferred.reject(err);
+            return;
+        }
+        logger.log('db_insertEvent done');
+        deferred.resolve(result.insertId);
+    })
+    return deferred.promise;
+}
+
+function db_insertEventFields(conn, eventId, fieldsDataString) {
+    var deferred = q.defer();
+
+    var fieldsData = JSON.parse(fieldsDataString);
+    if (fieldsData.length===0){
+        deferred.resolve();
+        return deferred;
+    }
+
+    var fieldsDataArr = fieldsData.map((i) => {
+        var valuesArr = Object.keys(i).map(key => i[key]);
+        valuesArr.unshift(eventId);
+        return valuesArr;
+    });
+
+    conn.query('INSERT INTO fields (eventid, name, mandatory, maxlen, mask) VALUES ?', [fieldsDataArr], function (err, result) {
+        if (err) {
+            logger.log('db_insertEventFields failed');
+            logger.log(err);
+            deferred.reject(err);
+            return;
+        }
+        logger.log('db_insertEventFields done');
+        deferred.resolve();
+    });
     return deferred.promise;
 }
 
 
-function uploadImgToDb(path, eventId) {
-    logger.log('uploadImgToDb: '+path);
+function db_moveImagesToDb(conn, eventId, dirPath, images) {
+    var deferred = q.defer();
+    var promises = images.map(img => uploadImgToDb(conn, eventId, dirPath + img));
+    q.all(promises)
+        .then(()=> {
+            logger.log('db_moveImagesToDb done');
+            deferred.resolve();
+        })
+        .catch((err)=> {
+            deferred.reject(err);
+        });
+    return deferred.promise;
+}
+
+function uploadImgToDb(conn, eventId, path) {
+    logger.log('uploadImgToDb: ' + path);
 
     var deferred = q.defer();
     var fileName = path.replace(/^.*[\\\/]/, '');
@@ -158,27 +235,27 @@ function uploadImgToDb(path, eventId) {
                 }
                 var buffer = new Buffer(fileSize);
                 fs.read(fd, buffer, 0, fileSize, 0, function (err, num) {
-                    if (err){
+                    if (err) {
                         logger.log(err);
                         deferred.reject(err);
                         return;
                     }
-                    db.connection.query("INSERT INTO eventimg (EVENTID, NAME, IMG) VALUES (?,?,?)", [eventId, fileName, buffer])
-                        .on('result', function (row) {
-                            deferred.resolve();
-                            return;
-                        })
-                        .on('error', function (err) {
-                            logger.log("Error while inserting into eventimg");
+                    conn.query("INSERT INTO eventimg (EVENTID, NAME, IMG) VALUES (?,?,?)", [eventId, fileName, buffer], function (err, result) {
+                        if (err) {
+                            logger.log('uploadImgToDb failed');
                             logger.log(err);
                             deferred.reject(err);
-                        });
-
+                            return;
+                        }
+                        deferred.resolve();
+                    })
                 });
             });
         })
     return deferred.promise;
 }
+
+
 
 
 
