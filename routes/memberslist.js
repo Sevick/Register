@@ -9,8 +9,6 @@ var multer = require('multer');
 var fs = require('fs');
 var path = require('path');
 var favicon = require('serve-favicon');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
 var q = require('q');
 
 var router = express.Router();
@@ -57,33 +55,6 @@ router.get('/', function (req, res) {
             logger.log(err);
             res.end(err);
         })
-
-/*    var conn;
-    db.getConnection()
-        .then((connection) => {
-            conn=connection;
-            return getSqlForDataRetrive(conn, eventId);
-        })
-        .then((sqltext) => {
-            return getMemebersListData(conn, eventId, sqltext);
-        })
-        .then((rows) => {
-            conn.release();
-            var result = {
-                eventId: eventId,
-                memberslist: rows
-            };
-            logger.log(result.memberslist);
-
-            res.render('memberslist', result);
-        })
-        .catch((err)=> {
-            if (conn)
-                conn.release();
-            logger.log("Error accuired while retriving data from database");
-            logger.log(err);
-            res.send("Error accuired while retriving data from database");
-        })*/
 })
 
 

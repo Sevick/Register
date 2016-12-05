@@ -9,33 +9,48 @@ var multer = require('multer');
 var fs = require('fs');
 var path = require('path');
 var favicon = require('serve-favicon');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
 var q = require('q');
 var rmdir = require('rmdir');
+var auth = require('../auth');
 
 
 var router = express.Router();
 module.exports = router;
 
-const queryInsertEventData = "INSERT INTO event (NAME,DT,REGSTART,REGEND,INFO,PRICE,CURRENCY,MINMEMBERS,MAXMEMBERS) VALUES (?,?,?,?,?,?,?,?,?)";
+const queryInsertEventData = "INSERT INTO event (USRID,NAME,DT,REGSTART,REGEND,INFO,PRICE,CURRENCY,MINMEMBERS,MAXMEMBERS) VALUES (?,?,?,?,?,?,?,?,?,?)";
+const querySelectEventImg = "SELECT img FROM eventimg WHERE eventid=? and name=?";
 
 
-router.get('/', function (req, res, next) {
-    sendEventCreateHtml(req, res);
+router.get('/', auth.checkAuth, function (req, res, next) {
+
+    if (!req.query.id) {
+        // event create request
+        res.render('event', '');
+        //res.sendFile(path.resolve(__dirname + '/../views/event.html'));
+    }
+    else{
+        // event update request
+        db.getEventData(req.query.id)
+            .then((result) => {
+                res.render('event', result);
+            })
+            .catch((err) => {
+                logger.log(err);
+                res.send(err);
+            })
+    }
+    
 });
 
 
-function sendEventCreateHtml(req, res) {
-    res.sendFile(path.resolve(__dirname + '/../views/event.html'));
-}
 
-
-router.post('/newevent', function (req, res) {
+router.post('/newevent', auth.checkAuth, function (req, res) {
     logger.log("POST /newevent");
     //logger.log(req.body);
 
-    insertEvent(req.body)
+    logger.log('req.userId='+req.userId);
+
+    insertEvent(req.userId,req.body)
         .then((newEventId)=> {
             logger.log("insertEvent done.  newEventId="+newEventId);
             var responsedata = {
@@ -50,6 +65,7 @@ router.post('/newevent', function (req, res) {
                 err: err,
             };
             res.send(responsedata);
+            return;
         });
 });
 
@@ -99,7 +115,7 @@ router.get('/image', function (req, res) {
         res.end('');
         return;
     }
-    db.connection.query("SELECT img FROM eventimg WHERE eventid=? and name=?", [eventId, imageName])
+    db.connection.query(querySelectEventImg, [eventId, imageName])
         .on('result', function (row) {
             logger.log("Image retrieved:  eventId=" + eventId + "  name=" + imageName);
             var imageExt = tools.getFileExt(imageName);
@@ -115,7 +131,7 @@ router.get('/image', function (req, res) {
 });
 
 //-----------------------------------------------------------------------------------------------------------------
-function insertEvent(eventData) {
+function insertEvent(userId,eventData) {
     var deferred = q.defer();
     var conn;
     var eventId;
@@ -126,7 +142,7 @@ function insertEvent(eventData) {
         })
         .then(()=> {
             logger.log('db_insertEvent');
-            return db_insertEvent(conn, eventData)
+            return db_insertEvent(conn, userId,eventData)
         })
         .then((newEventId)=> {
             eventId = newEventId;
@@ -161,10 +177,10 @@ function insertEvent(eventData) {
 }
 
 
-function db_insertEvent(conn, eventData) {
+function db_insertEvent(conn, userId, eventData) {
     var deferred = q.defer();
 
-    conn.query(queryInsertEventData, [eventData.eventname, new Date(eventData.eventdate), new Date(eventData.regstart), new Date(eventData.regend), eventData.info, eventData.price, eventData.currency, eventData.minmembers, eventData.maxmembers], function (err, result) {
+    conn.query(queryInsertEventData, [userId, eventData.eventname, new Date(eventData.eventdate), new Date(eventData.regstart), new Date(eventData.regend), eventData.info, eventData.price, eventData.currency, eventData.minmembers, eventData.maxmembers], function (err, result) {
         if (err) {
             logger.log('db_insertEvent failed');
             logger.log(err);

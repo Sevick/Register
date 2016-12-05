@@ -18,8 +18,9 @@ var express = require('express');
 var router = express.Router();
 module.exports = router;
 
-var queryEventData = 'SELECT id,name,dt,regstart,regend,info,price,currency,minmembers,maxmembers, IFNULL(memberscount,0) memberscount, imgslist, vacancies, fields FROM v_eventdata WHERE id=?';
-
+//const queryEventData = "SELECT id,name,dt,regstart,regend,info,price,currency,minmembers,maxmembers, IFNULL(memberscount,0) memberscount, imgslist, vacancies, fields FROM v_eventdata WHERE id=?";
+const queryInsertMemberdata="INSERT INTO memberdata (memberID,FIELDID,DATA) VALUES (?,?,?)";
+const queryInsertMember="INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)";
 
 /* GET members listing. */
 
@@ -114,7 +115,7 @@ function insertEventmember(memberData) {
                 var confirmCode = Math.random().toString(36).substring(2, 10);
                 confirmCode = confirmCode + Date.now();
 
-                conn.query('INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)', [memberData.eventId, confirmCode, memberData['email']], function (err, result) {
+                conn.query(queryInsertMember, [memberData.eventId, confirmCode, memberData['email']], function (err, result) {
                     if (err) {
                         logger.log(err);
                         return conn.rollback(function () {
@@ -171,7 +172,7 @@ function insertmemberData(conn, memberId, fieldId, fieldData) {
     var deferred = q.defer();
 
     //logger.log('field #' + fieldId + '  insert Data: ' + fieldData);
-    conn.query('INSERT INTO memberdata (memberID,FIELDID,DATA) VALUES (?,?,?)', [memberId, fieldId, fieldData], function (err, result) {
+    conn.query(queryInsertMemberdata, [memberId, fieldId, fieldData], function (err, result) {
         if (err) {
             deferred.reject(err);
             return;

@@ -6,6 +6,7 @@ var configpath = './config/register.conf';
 
 var config = {
     port: '3001',
+    tokenpass: 'cvb66yuyLJFRI336B4VMtivb226nvitFKQPLKPQA96AAbg890fbnhbnsm',
     dbconfig: {
         host: 'localhost',
         user: 'register',

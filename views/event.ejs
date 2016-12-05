@@ -142,13 +142,15 @@
 <script type="text/javascript" src="/js/common.js"></script>
 <script type="text/javascript" src="/js/event.js"></script>
 <script type="text/javascript">
-    var eventRandomHash = Math.random().toString(36).substring(2, 10);
-    eventRandomHash = eventRandomHash + Date.now();
-
-    var cutomFieldsCount = 0;
-
 
     var eventImages = [];
+    var eventRandomHash = Math.random().toString(36).substring(2, 10);
+    eventRandomHash = eventRandomHash + Date.now();
+    var cutomFieldsCount = 0;
+
+    eventdata = '<%- JSON.stringify(eventdata) %>';
+
+
     setupDoc();
 
     $('.container').on('click', '.removeFieldButton', onFieldDelete); // onClick for remove additional field buttons
@@ -159,20 +161,6 @@
     // evaluate hidden fields and call real sumbit
     $('#submitButton').click(submitData);
     function submitData(){
-        $('input[name="uploadedFilesArray"]').val(JSON.stringify(eventImages));
-        $('input[name="eventRandomHash"]').val(eventRandomHash);
-
-        var customFields = [];
-        $('input[name^="customField_"]').each(function() {
-            var nextField = {};
-            nextField.name=$(this).val();
-            nextField.mandatory=1;
-            nextField.maxlen=30;
-            nextField.mask='';
-            customFields.push(nextField);
-        });
-        $('input[name="customFields"]').val(JSON.stringify(customFields));
-
         $('#realSubmitButton').click();
     }
 
@@ -212,7 +200,7 @@
 
     $('#eventForm').on('submit', function (event) {
         event.preventDefault();
-
+        populateHiddenFields();
         $.post({
             url: '/event/newevent',
             type: 'post',
@@ -240,7 +228,21 @@
         return false;
     });
 
+    function populateHiddenFields(){
+        $('input[name="uploadedFilesArray"]').val(JSON.stringify(eventImages));
+        $('input[name="eventRandomHash"]').val(eventRandomHash);
 
+        var customFields = [];
+        $('input[name^="customField_"]').each(function() {
+            var nextField = {};
+            nextField.name=$(this).val();
+            nextField.mandatory=1;
+            nextField.maxlen=30;
+            nextField.mask='';
+            customFields.push(nextField);
+        });
+        $('input[name="customFields"]').val(JSON.stringify(customFields));
+    }
 
 
 </script>

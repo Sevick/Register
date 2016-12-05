@@ -13,11 +13,12 @@
     "ejs": "^2.5.2",
     "express": "~4.14.0",
     "express-fileupload": "0.0.5",
+    "jsonwebtoken": "^7.1.9",
+    "md5": "^2.2.1",
     "morgan": "~1.7.0",
     "multer": "^1.2.0",
     "node.extend": "^1.1.6",
     "nodemailer": "^2.6.4",
-    "promisify": "0.0.3",
     "q": "^1.4.1",
     "rmdir": "^1.2.0",
     "serve-favicon": "^2.3.2"

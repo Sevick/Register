@@ -1,0 +1,46 @@
+
+body{
+    min-width: 250px;
+}
+
+#loginForm{
+}
+
+.panel{
+    padding-bottom: 0px;
+}
+
+
+#loginbox{
+    margin-top:50px;
+}
+
+#loginButton{
+    width: 100%;
+}
+
+
+#loginFuncsDiv{
+    font-family: Arial, sans-serif;
+    border-top: 1px solid#888;
+    padding-top:15px;
+}
+
+.panel-body{
+    padding-top:30px;
+}
+
+.input-group{
+    margin-bottom: 25px;
+}
+
+.form-group{
+    margin-top:10px;
+}
+
+#forgotPassword{
+    float:right;
+    font-size: 80%;
+    position: relative;
+    top:-10px;
+}

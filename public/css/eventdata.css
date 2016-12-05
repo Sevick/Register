@@ -21,3 +21,6 @@
     float: none;
 }
 
+.carouselItem>img{
+    margin: auto;
+}

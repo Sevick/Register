@@ -55,16 +55,19 @@
 <script type="text/javascript">
 
 
-    var eventdata = '<%- JSON.stringify(eventdata) %>';
+    var eventdataJSON = '<%- JSON.stringify(eventdata) %>';
+    var eventdata=JSON.parse(eventdataJSON);
     //console.log(eventdata);
-    setupEventData(JSON.parse(eventdata));
+    var eventId=eventdata.id;
+    console.log('eventId='+eventId);
+    setupEventData(JSON.parse(eventdataJSON));
 
     //var fields='<%- eventdata.fields %>';
     //var fieldsJSON=fields==="" ? {} : JSON.parse(fields);
 
     var fieldsJSON = '<%- JSON.stringify(fields) %>';
     var fields = JSON.parse(fieldsJSON);
-    console.log(fields);
+    //console.log(fields);
     setupDoc(fields);
 
     $('#registerForm').on('submit', function (event) {

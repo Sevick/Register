@@ -9,6 +9,9 @@ function setupDoc(fieldsJSON) {
     //var testJson = '{"fields":[{"id":125,"name":"name","label":"Name","mandatory":true},{"id":123,"name":"phone","mask":"054-nnnnnn","mandatory":true},{"id":124,"name":"email","mask":"x@x.x","mandatory":true,"type":"email"}]}';
     //var event = JSON.parse(fieldsJSON);
 
+    if (!fieldsJSON)
+        return;
+
     var event = fieldsJSON;
     console.log(event);
     for (var propName in event) {
