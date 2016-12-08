@@ -38,14 +38,14 @@
                 <div id="inputsContainer">
 
                     <div class="form-group col-md-6">
-                        <label for="eventname">Event name</label>
-                        <input type="text" class="form-control" id="eventname" name="eventname" required="true"
+                        <label for="name">Event name</label>
+                        <input type="text" class="form-control" id="name" name="name" required="true"
                                maxlength="64">
                     </div>
 
                     <div class="form-group col-md-2">
-                        <label for="eventdate">Event date</label>
-                        <input type="date" class="form-control" id="eventdate" name="eventdate" required="true">
+                        <label for="dt">Event date</label>
+                        <input type="date" class="form-control" id="dt" name="dt" required="true">
                     </div>
 
                     <div class="form-group col-md-2">
@@ -96,9 +96,10 @@
                 </div>
 
 
-                <input type="hidden" name="uploadedFilesArray">
-                <input type="hidden" name="eventRandomHash">
                 <input type="hidden" name="eventId">
+                <input type="hidden" name="eventRandomHash">
+                <input type="hidden" name="removedFilesArray">
+                <input type="hidden" name="uploadedFilesArray">
                 <input type="hidden" name="customFields">
 
                 <div class="col-md-12 col-xs-12" id="realSumbit" style="display: none">
@@ -111,16 +112,16 @@
 
             </div>
 
-                <div class="col-md-12 col-xs-12" id="addfield">
-                    <button type="button" class="btn btn-default pull-right" id="addFieldButton"
-                            aria-label="Add field">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    </button>
-                </div>
+            <div class="col-md-12 col-xs-12" id="addfield">
+                <button type="button" class="btn btn-default pull-right" id="addFieldButton"
+                        aria-label="Add field">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                </button>
+            </div>
 
-                <div class="col-md-12 col-xs-12" id="sumbit">
-                    <button type="button" id="submitButton" class="btn btn-primary pull-right">Create event</button>
-                </div>
+            <div class="col-md-12 col-xs-12" id="sumbit">
+                <button type="button" id="submitButton" class="btn btn-primary pull-right">Create event</button>
+            </div>
 
 
             <div id="newFieldTemplate" class="customFieldDiv" style="display: none">
@@ -144,11 +145,58 @@
 <script type="text/javascript">
 
     var eventImages = [];
+    var removedImages = [];
     var eventRandomHash = Math.random().toString(36).substring(2, 10);
     eventRandomHash = eventRandomHash + Date.now();
     var cutomFieldsCount = 0;
 
-    eventdata = '<%- JSON.stringify(eventdata) %>';
+    var eventdata =<%- JSON.stringify(eventdata) %>;
+    var fields = <%- JSON.stringify(fields) %>;
+
+    //console.log(eventdata);
+    //console.log(fields);
+
+    if (eventdata) {
+        // update routeEvent
+        document.title = 'Edit routeEvent';
+        $('input[name="eventId"]').val(eventdata.id);
+        for (var eventFieldIdx in eventdata) {
+            console.log(eventFieldIdx);
+            var inputfield = $('#' + eventFieldIdx);
+            if (inputfield.length) {
+                //console.log(inputfield);
+                //console.log(eventdata[eventFieldIdx]);
+                if (inputfield.attr('type') === 'date') {
+                    var dtStr = eventdata[eventFieldIdx];
+                    $('#' + eventFieldIdx).val(getDataForInputField(new Date(dtStr)));
+                }
+                else {
+                    $('#' + eventFieldIdx).val(eventdata[eventFieldIdx]);
+                }
+            }
+        }
+
+        var preloadedImgs = [];
+        if (!eventdata.imgslist)  preloadedImgs = [];
+        else preloadedImgs = eventdata.imgslist.split('|');
+        //console.log(preloadedImgs);
+    }
+
+    if (fields) {
+        for (var fieldsIdx in fields.fields) {
+            var newId = 'dbCustomField_' + cutomFieldsCount++;
+            var newField = $('#newFieldTemplate').clone().prop('id', 'div' + newId).show();
+            console.log(newField);
+            $('#eventFields').append(newField);
+            $('#div' + newId).addClass("dbCustomFieldDiv");
+            $('#div' + newId).find('#template').prop('id', newId).prop('name', newId + '[]');
+            $('#div' + newId).find('.removeFieldButton').remove();
+            console.log(fields.fields[fieldsIdx].name);
+            $('#' + newId).val(fields.fields[fieldsIdx].name);
+            $('#' + newId).attr('dbFieldId',fields.fields[fieldsIdx].id);
+            $('#' + newId).attr('dbFieldId',fields.fields[fieldsIdx].id);
+        }
+    }
 
 
     setupDoc();
@@ -160,7 +208,7 @@
 
     // evaluate hidden fields and call real sumbit
     $('#submitButton').click(submitData);
-    function submitData(){
+    function submitData() {
         $('#realSubmitButton').click();
     }
 
@@ -172,7 +220,7 @@
         console.log(newField);
         $('#eventFields').append(newField);
         $('#div' + newId).addClass("customFieldDiv");
-        $('#div' + newId).find('#template').prop('id', newId).prop('name', newId+'[]');
+        $('#div' + newId).find('#template').prop('id', newId).prop('name', newId + '[]');
     }
 
 
@@ -185,6 +233,25 @@
         autoProcessQueue: true,
         dictDefaultMessage: "Click to add images<br>Or drag&drop them here (max size - 1MB)",
         init: function () {
+
+            if (preloadedImgs) {
+                var myDropzone = this;
+                preloadedImgs.map(function (img, imgIdx) {
+                    var imgUrl = window.location.origin + '/routeEvent/image?id=' + eventdata.id + '&img=' + img;
+                    var imgShortUrl = '/event/image?id=' + eventdata.id + '&img=' + img;
+                    var mockFile = {name: img, size: 0};
+                    myDropzone.files.push(mockFile)
+                    myDropzone.emit("addedfile", mockFile);
+                    //myDropzone.emit("thumbnail", mockFile, imgUrl);
+                    myDropzone.createThumbnailFromUrl(mockFile, imgShortUrl);
+                    myDropzone.emit("complete", mockFile);
+                    var existingFileCount = 1; // The number of files already uploaded
+                    //myDropzone.options.maxFiles = myDropzone.options.maxFiles - existingFileCount;
+                });
+            }
+
+
+
             this.on("success", function (file) {
                 //console.log("Images added: ");
                 //console.log(file);
@@ -193,7 +260,13 @@
             this.on("removedfile", function (file) {
                 console.log('removedfile:');
                 console.log(file.name);
-                eventImages.splice(eventImages.indexOf(file.name), 1);
+                console.log("idx="+eventImages.indexOf(file.name));
+                if (eventImages.indexOf(file.name)>=0)
+                    eventImages.splice(eventImages.indexOf(file.name), 1);
+                else
+                    removedImages.push(file.name);
+
+
             });
         },
     };
@@ -228,20 +301,31 @@
         return false;
     });
 
-    function populateHiddenFields(){
+    function populateHiddenFields() {
         $('input[name="uploadedFilesArray"]').val(JSON.stringify(eventImages));
         $('input[name="eventRandomHash"]').val(eventRandomHash);
+        $('input[name="removedFilesArray"]').val(JSON.stringify(removedImages));
 
         var customFields = [];
-        $('input[name^="customField_"]').each(function() {
+        $('input[name^="customField_"]').each(function () {
             var nextField = {};
-            nextField.name=$(this).val();
-            nextField.mandatory=1;
-            nextField.maxlen=30;
-            nextField.mask='';
+            nextField.name = $(this).val();
+            nextField.mandatory = 1;
+            nextField.maxlen = 30;
+            nextField.mask = '';
             customFields.push(nextField);
         });
         $('input[name="customFields"]').val(JSON.stringify(customFields));
+
+        var customFieldsUpdate = [];
+        $('input[name^="customField_"]').each(function () {
+            var nextField = {};
+            nextField.name = $(this).val();
+            nextField.mandatory = 1;
+            nextField.maxlen = 30;
+            nextField.mask = '';
+        });
+
     }
 
 

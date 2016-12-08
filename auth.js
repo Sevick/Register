@@ -2,6 +2,8 @@
  * Created by S on 04.12.2016.
  */
 
+"use strict";
+
 var jwt = require('jsonwebtoken');
 
 exports.checkAuth =checkAuth;

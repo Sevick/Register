@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Confirm registration</title>
 
-
-    <meta charset="UTF-8">
-    <title>Create new event</title>
     <!-- jQuery library -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
@@ -20,16 +17,81 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
 
-    <link rel="stylesheet" type="text/css" href="/css/event.css">
+    <script src="/js/serializejson/jquery.serializejson.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="/css/registered.css">
 </head>
 <body>
 
+<div class="container">
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            Hooray! You has been registered!
+        </div>
+        <div class="panel-body">
+            <div class="row">
 
-Hooray! You has been registered!
+                <div class="col-md-10 col-md-offset-1" id="innerContent">
+                    <h3>We send you confirmation code to the email you provided.</h3>
+                </div>
+                <div class="col-md-6 col-md-offset-3" id="formDiv">
+                    <form method="post" action="#" id="confirmForm">
+                        <div class="form-group col-md-12">
+                            <label for="confirmCode">Please enter the code</label>
+                            <input type="text" class="form-control" id="confirmCode" name="confirmCode" required="true"
+                                   maxlength="64">
+                        </div>
 
-We send you confirmation email.
+                        <div id="errorPanel" class="alert alert-danger fade in" style="display: none"></div>
 
 
+                        <div class="col-md-12 col-xs-12" id="realSumbit">
+                            <button type="submit" id="submitButton" class="btn btn-primary pull-right">Confirm</button>
+                        </div>
+                    </form>
+                </div>
 
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="js/common.js"></script>
+<script>
+    var eventMemberId='<%= eventmemberid %>';
+
+    $('#confirmForm').on('submit', function (event) {
+        event.preventDefault();
+        $("#errorPanel").hide();
+        $.post({
+            url: '/registered/confirm?id=' + eventMemberId,
+            type: 'post',
+            data: $('#confirmForm').serializeJSON(),
+                //data: $(this).serialize(),
+                success: function (data, textStatus, jqXHR) {
+                // if success, HTML response is expected, so replace current
+                if (textStatus === 'success') {
+                    console.log(data);
+                    if (data.status==='success'){
+                        alert('Registration confirmed');
+                    }
+                    else{
+                        $("#errorPanel").html("<p>"+data.errmsg+"</p>");
+                        $("#errorPanel").show();
+                    }
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 0 || jqXHR == 302) {
+                alert('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+            } else {
+                alert('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+            }
+        });
+        return false;
+    });
+
+
+</script>
 </body>
 </html>

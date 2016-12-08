@@ -17,7 +17,7 @@ var http = require('http').Server(app);
 app.set('view engine', 'ejs');
 
 
-var event = require('./routes/event');
+var routeEvent = require('./routes/route_event');
 var invite = require('./routes/invite');
 var register = require('./routes/register');
 var registered = require('./routes/registered');
@@ -35,7 +35,7 @@ app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/login', login);
-app.use('/event',event);
+app.use('/event',routeEvent);
 app.use('/invite', invite);
 app.use('/register', register);
 app.use('/registered', registered);

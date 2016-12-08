@@ -139,7 +139,7 @@ function getEventData(eventId) {
                     deferred.resolve(result);
                 }
                 catch (err) {
-                    logger.log('Error on processing data in getEventData for event ' + eventId);
+                    logger.log('Error on processing data in getEventData for routeEvent ' + eventId);
                     logger.log(err);
                     deferred.reject(err);
                 }

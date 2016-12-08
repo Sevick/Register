@@ -49,3 +49,10 @@ function redirect (url) {
         window.location.href = url;
     }
 }
+
+function getDataForInputField(dt) {
+    var day = ("0" + dt.getDate()).slice(-2);
+    var month = ("0" + (dt.getMonth() + 1)).slice(-2);
+    var dtStr = dt.getFullYear() + "-" + (month) + "-" + (day);
+    return dtStr;
+}

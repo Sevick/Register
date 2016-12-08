@@ -2,11 +2,17 @@ body{
     min-width: 350px;
     font-family: Arial, sans-serif;
 }
-
 .container{
     margin-top: 50px;
 }
 
+#submitButton{
+    width: 100%;
+}
 
+#innerContent{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 
 

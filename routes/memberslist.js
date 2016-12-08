@@ -37,7 +37,7 @@ router.get('/', function (req, res) {
 
     if (!eventId) {
         logger.log('ID is not specified');
-        res.send('ID is not specified. Use /memberslist?id=XXX where XXX is the event ID');
+        res.send('ID is not specified. Use /memberslist?id=XXX where XXX is the routeEvent ID');
         return;
     }
 

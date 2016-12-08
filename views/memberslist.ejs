@@ -34,8 +34,8 @@
                     <tr class="membersTableHeader">
                         <td class="col-md-1">#</td>
                         <% for (var key in memberslist[0]) {
-                             if (key != "eventid" && key != "memberid") {%>
-                                <td><%= key %></td>
+                             if (key != "eventid" && key != "memberid"){%>
+                                    <td><%= key %></td>
                         <%}  } %>
                         <td class="col-md-1 narrow-col"></td>
                     </tr>
@@ -71,6 +71,8 @@
         var fieldsJSON = '<%- JSON.stringify(fields) %>';
         var fields = JSON.parse(fieldsJSON);
 
+        var membersList=<%- JSON.stringify(memberslist) %>;
+        console.log(membersList);
 
         var onDel = function (){
             memberId2Del = {memberid : this.getAttribute('memberid')};

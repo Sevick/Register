@@ -14,6 +14,7 @@
     "express": "~4.14.0",
     "express-fileupload": "0.0.5",
     "jsonwebtoken": "^7.1.9",
+    "log4js": "^1.0.1",
     "md5": "^2.2.1",
     "morgan": "~1.7.0",
     "multer": "^1.2.0",

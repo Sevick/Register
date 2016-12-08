@@ -37,7 +37,7 @@ router.get('/', function(req, res, next) {
           }
         })
         .on('error', function (err) {
-          logger.log("Error while inserting into event");
+          logger.log("Error while inserting into routeEvent");
           logger.log(err);
         });
   }

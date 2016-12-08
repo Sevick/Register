@@ -1,3 +1,8 @@
+body{
+    min-width: 350px;
+    font-family: Arial, sans-serif;
+}
+
 .captiontext{
     font-size: large;
     font-weight: bold;

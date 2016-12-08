@@ -2,11 +2,13 @@ body{
     min-width: 350px;
     font-family: Arial, sans-serif;
 }
-
 .container{
     margin-top: 50px;
 }
 
-
+#innerContent{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 
 

@@ -27,29 +27,7 @@ const queryInsertMember="INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VAL
 router.get('/test', function (req, res, next) {
     logger.log('GET test/');
 
-    var data = {
-        eventName: 'Neverland party'
-    }
 
-    var renderOptions = {};
-
-    ejs.renderFile('./views/registeremail.ejs', data, renderOptions, (err, renderedHtml) => {
-        // str => Rendered HTML string
-        if (err) {
-            logger.log('Unable to render registeremail.ejs');
-            logger.log(err);
-            return;
-        }
-
-        mail.sendMail('sevick.v@gmail.com', 'Mailer test', renderedHtml)
-            .then(()=> {
-                logger.log('Mail sent');
-            })
-            .catch((err)=> {
-                logger.log('Mail send error:');
-                logger.log(err);
-            });
-    });
 });
 
 
@@ -57,8 +35,8 @@ router.get('/', function (req, res, next) {
     logger.log('GET register/   ' + req.query.id);
 
     if (!req.query.id) {
-        logger.log("event id not specified");
-        res.send('event id not specified');
+        logger.log('routeEvent id not specified');
+        res.send('routeEvent id not specified');
         return;
     }
 
@@ -77,22 +55,71 @@ router.post('/', function (req, res, next) {
 
     if (req.query.id) {
 
+        var memberData;
         insertEventmember(req.body)
-            .then(function () {
-                logger.log("Data sumbitted to db");
-                sendRegistered(req, res, req.query.id);
+            .then((regMemberData)=>{
+                memberData=regMemberData;
+                //logger.log('Data sumbitted to db');
+                var memberApproveLink=req.protocol + '://' + req.get('host') + '/registered/confirm?id=' + memberData.eventmemberid+'&confirm='+memberData.confirmcode;
+                return sendRegistrationEmail(req.body.eventId,memberData.eventmemberid, req.body.email, memberApproveLink);
             })
+            .then(() => {
+                //logger.log('Mail sent');
+                sendRegistered(req, res, memberData.eventmemberid);
+            })
+
             .catch((err) => {
-                logger.log("Failed to submit data to db");
+                logger.log('Failed to submit data to db');
                 logger.log(err);
             });
 
     }
     else {
-        logger.log("event id not specified");
-        res.send('event id not specified');
+        logger.log('routeEvent id not specified');
+        res.send('routeEvent id not specified');
     }
 });
+
+
+function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
+    var deferred = q.defer();
+
+    db.getEventData(eventId)
+        .then((result) => {
+
+            logger.log(result);
+            var renderOptions = {};
+
+            result.approvelink=memberApproveLink;
+
+            ejs.renderFile('./views/registeremail.ejs', result, renderOptions, (err, renderedHtml) => {
+                // str => Rendered HTML string
+                if (err) {
+                    logger.log('Unable to render registeremail.ejs');
+                    logger.log(err);
+                    deferred.reject(err);
+                }
+
+                mail.sendMail(memberMail, 'Please confirm you registration to '+result.eventdata.name, renderedHtml)
+                    .then(()=> {
+                        deferred.resolve();
+                    })
+                    .catch((err)=> {
+                        logger.log('Mail send error:');
+                        logger.log(err);
+                        deferred.reject(err);
+                    });
+            });
+        })
+        .catch((err) => {
+            logger.log('sendRegistrationEmail')
+            logger.log(err);
+            deferred.reject(err);
+        })
+
+    return deferred.promise;
+}
+
 
 
 function insertEventmember(memberData) {
@@ -144,7 +171,12 @@ function insertEventmember(memberData) {
                                     });
                                 }
                                 conn.release();
-                                deferred.resolve();
+
+                                var memberData={
+                                    confirmcode: confirmCode,
+                                    eventmemberid: eventmemberId
+                                }
+                                deferred.resolve(memberData);
                             });
 
                         })
@@ -183,10 +215,10 @@ function insertmemberData(conn, memberId, fieldId, fieldData) {
     return deferred.promise;
 }
 
-function sendRegistered(req, res, eventId) {
+function sendRegistered(req, res, memberId) {
     var response = {
         host: req.protocol + '://' + req.get('host'),
-        redirect: req.protocol + '://' + req.get('host') + '/registered?id=' + eventId
+        redirect: req.protocol + '://' + req.get('host') + '/registered?id=' + memberId
     };
     res.send(response);
 }
