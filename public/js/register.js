@@ -13,7 +13,7 @@ function setupDoc(fieldsJSON) {
         return;
 
     var event = fieldsJSON;
-    console.log(event);
+    //console.log(event);
     for (var propName in event) {
         if (typeof(event[propName]) === 'string') {
             var elements = document.getElementsByClassName(propName);

@@ -163,7 +163,7 @@
         document.title = 'Edit routeEvent';
         $('input[name="eventId"]').val(eventdata.id);
         for (var eventFieldIdx in eventdata) {
-            console.log(eventFieldIdx);
+            //console.log(eventFieldIdx);
             var inputfield = $('#' + eventFieldIdx);
             if (inputfield.length) {
                 //console.log(inputfield);
@@ -190,12 +190,12 @@
         for (var fieldsIdx in fields.fields) {
             var newId = 'dbCustomField_' + cutomFieldsCount++;
             var newField = $('#newFieldTemplate').clone().prop('id', 'div' + newId).show();
-            console.log(newField);
+            //console.log(newField);
             $('#eventFields').append(newField);
             $('#div' + newId).addClass("dbCustomFieldDiv");
             $('#div' + newId).find('#template').prop('id', newId).prop('name', newId + '[]');
             $('#div' + newId).find('.removeFieldButton').remove();
-            console.log(fields.fields[fieldsIdx].name);
+            //console.log(fields.fields[fieldsIdx].name);
             $('#' + newId).val(fields.fields[fieldsIdx].name);
             $('#' + newId).attr('dbFieldId',fields.fields[fieldsIdx].id);
             $('#' + newId).attr('dbFieldId',fields.fields[fieldsIdx].id);
@@ -221,7 +221,7 @@
     function addField() {
         var newId = 'customField_' + cutomFieldsCount++;
         var newField = $('#newFieldTemplate').clone().prop('id', 'div' + newId).show();
-        console.log(newField);
+        //console.log(newField);
         $('#eventFields').append(newField);
         $('#div' + newId).addClass("customFieldDiv");
         $('#div' + newId).find('#template').prop('id', newId).prop('name', newId + '[]');
@@ -250,7 +250,7 @@
                     myDropzone.createThumbnailFromUrl(mockFile, imgShortUrl);
                     myDropzone.emit("complete", mockFile);
                     var existingFileCount = 1; // The number of files already uploaded
-                    //myDropzone.options.maxFiles = myDropzone.options.maxFiles - existingFileCount;
+                    //myDropzone.options.maxFiles = myDropzone.options.maxFiles - existingFileoount;
                 });
             }
 

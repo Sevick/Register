@@ -6,7 +6,7 @@
 function setupEventData(eventdata) {
     var eventId = eventdata.id;
 
-    console.log(eventdata.dt);
+    //console.log(eventdata.dt);
 
     var eventDt = new Date(eventdata.dt);
     var regEndDt = new Date(eventdata.regend);
