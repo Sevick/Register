@@ -10,20 +10,21 @@ var fs = require('fs');
 var path = require('path');
 var favicon = require('serve-favicon');
 var q = require('q');
+var logger = require('../logger').getLogger("ROUTES/MEMBERSLIST");
 
 var router = express.Router();
 module.exports = router;
 
 router.post('/delmember', function (req, res) {
-    logger.log('POST /memberslist/delmember ID=' + req.body.memberid);
+    logger.info('POST /memberslist/delmember ID=' + req.body.memberid);
 
     db.connection.query("DELETE FROM register.eventmember WHERE memberid=?", [req.body.memberid])
         .on('result', function (dbQeryRes) {
             res.end("deleted");
         })
         .on('error', function (err) {
-            logger.log("Error  deleting");
-            logger.log(err);
+            logger.error("Error  deleting");
+            logger.error(err);
             res.end("Error deleting");
         });
 });
@@ -31,12 +32,12 @@ router.post('/delmember', function (req, res) {
 
 router.get('/', function (req, res) {
     // ?id=XXX
-    logger.log('GET /memberslist');
+    logger.info('GET /memberslist');
 
     var eventId = req.query.id;
 
     if (!eventId) {
-        logger.log('ID is not specified');
+        logger.info('ID is not specified');
         res.send('ID is not specified. Use /memberslist?id=XXX where XXX is the routeEvent ID');
         return;
     }
@@ -52,9 +53,16 @@ router.get('/', function (req, res) {
             res.render('memberslist', result);
         })
         .catch((err) => {
-            logger.log(err);
-            res.end(err);
+            logger.error('Invalid event id');
+            sendWrongRequest(req,res,'Invalid event id');
         })
 })
 
-
+function sendWrongRequest(req,res,err){
+    logger.debug("sendWrongRequest");
+    var errdata = {
+        status: "error",
+        errmsg: err
+    };
+    res.render('error',errdata);
+}

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Create new event</title>
+    <title><%= action %> event</title>
     <!-- jQuery library -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
@@ -29,7 +29,7 @@
 
     <div class="panel panel-primary">
         <div class="panel-heading">
-            <h3 class="panel-title">Create event</h3>
+            <h3 class="panel-title"><%= action %> event</h3>
         </div>
 
         <div class="panel-body">
@@ -101,9 +101,10 @@
                 <input type="hidden" name="removedFilesArray">
                 <input type="hidden" name="uploadedFilesArray">
                 <input type="hidden" name="customFields">
+                <input type="hidden" name="customFieldsUpdatesArray">
 
                 <div class="col-md-12 col-xs-12" id="realSumbit" style="display: none">
-                    <button type="submit" id="realSubmitButton" class="btn btn-primary pull-right">Create event</button>
+                    <button type="submit" id="realSubmitButton" class="btn btn-primary pull-right">==</button>
                 </div>
             </form>
 
@@ -120,7 +121,7 @@
             </div>
 
             <div class="col-md-12 col-xs-12" id="sumbit">
-                <button type="button" id="submitButton" class="btn btn-primary pull-right">Create event</button>
+                <button type="button" id="submitButton" class="btn btn-primary pull-right"><%= action %> event</button>
             </div>
 
 
@@ -146,6 +147,7 @@
 
     var eventImages = [];
     var removedImages = [];
+    var preloadedFields = [];
     var eventRandomHash = Math.random().toString(36).substring(2, 10);
     eventRandomHash = eventRandomHash + Date.now();
     var cutomFieldsCount = 0;
@@ -182,7 +184,9 @@
         //console.log(preloadedImgs);
     }
 
+
     if (fields) {
+        preloadedFields = fields.fields;
         for (var fieldsIdx in fields.fields) {
             var newId = 'dbCustomField_' + cutomFieldsCount++;
             var newField = $('#newFieldTemplate').clone().prop('id', 'div' + newId).show();
@@ -317,14 +321,17 @@
         });
         $('input[name="customFields"]').val(JSON.stringify(customFields));
 
-        var customFieldsUpdate = [];
+        var customFieldsUpdate;
         $('input[name^="customField_"]').each(function () {
-            var nextField = {};
-            nextField.name = $(this).val();
-            nextField.mandatory = 1;
-            nextField.maxlen = 30;
-            nextField.mask = '';
+            var preloadedFieldsIdx=preloadedFields.find(function(item){ return  item.name!==$(this).val()});
+            if (preloadedFieldsIdx){
+                var elem=preloadedFields[preloadedFieldsIdx];
+                elem.name=$(this).val();
+                customFieldsUpdate.push(elem);
+            }
         });
+        $('input[name="customFieldsUpdatesArray"]').val(JSON.stringify(customFieldsUpdate));
+
 
     }
 

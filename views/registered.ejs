@@ -36,7 +36,7 @@
                 </div>
                 <div class="col-md-6 col-md-offset-3" id="formDiv">
                     <form method="post" action="#" id="confirmForm">
-                        <div class="form-group col-md-12">
+                        <div class="form-group col-md-12 forminputs">
                             <label for="confirmCode">Please enter the code</label>
                             <input type="text" class="form-control" id="confirmCode" name="confirmCode" required="true"
                                    maxlength="64">
@@ -63,6 +63,15 @@
     $('#confirmForm').on('submit', function (event) {
         event.preventDefault();
         $("#errorPanel").hide();
+
+        $.post('some.php', {name: 'John'})
+                .done(function(msg){  })
+                .fail(function(xhr, status, error) {
+                    // error handling
+                });
+
+
+
         $.post({
             url: '/registered/confirm?id=' + eventMemberId,
             type: 'post',
@@ -80,6 +89,7 @@
                         $("#errorPanel").show();
                     }
                 }
+
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 0 || jqXHR == 302) {

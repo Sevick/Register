@@ -1,15 +1,12 @@
 /**
  * Created by S on 09.11.2016.
  */
+var log4js = require('log4js');
 
-module.exports = Log;
 
-function Log(){
-    return {
-        log: log,
-    }
+exports.getLogger = getLogger;
+function getLogger(modulename){
+  return log4js.getLogger(modulename);
 }
 
-function log(stuff) {
-    console.log(stuff);
-}
+

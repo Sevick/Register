@@ -25,12 +25,12 @@ function db_insertEvent(conn, userId, eventData) {
 
     conn.query(queryInsertEventData, [userId, eventData.name, new Date(eventData.dt), new Date(eventData.regstart), new Date(eventData.regend), eventData.info, eventData.price, eventData.currency, eventData.minmembers, eventData.maxmembers], function (err, result) {
         if (err) {
-            logger.log('db_insertEvent failed');
-            logger.log(err);
+            logger.error('db_insertEvent failed');
+            logger.error(err);
             deferred.reject(err);
             return;
         }
-        logger.log('db_insertEvent done');
+        logger.debug('db_insertEvent done');
         deferred.resolve(result.insertId);
     })
     return deferred.promise;
@@ -55,12 +55,12 @@ function db_insertEventFields(conn, eventId, fieldsDataString) {
 
     conn.query(queryInsertFields, [fieldsDataArr], function (err, result) {
         if (err) {
-            logger.log('db_insertEventFields failed');
-            logger.log(err);
+            logger.error('db_insertEventFields failed');
+            logger.error(err);
             deferred.reject(err);
             return;
         }
-        logger.log('db_insertEventFields done');
+        logger.debug('db_insertEventFields done');
         deferred.resolve();
     });
     return deferred.promise;
@@ -72,7 +72,7 @@ function db_moveImagesToDb(conn, eventId, dirPath, images) {
     var promises = images.map(img => uploadImgToDb(conn, eventId, dirPath + img));
     q.all(promises)
         .then(()=> {
-            logger.log('db_moveImagesToDb done');
+            logger.debug('db_moveImagesToDb done');
             deferred.resolve();
         })
         .catch((err)=> {
@@ -82,7 +82,7 @@ function db_moveImagesToDb(conn, eventId, dirPath, images) {
 }
 
 function uploadImgToDb(conn, eventId, path) {
-    logger.log('uploadImgToDb: ' + path);
+    logger.debug('uploadImgToDb: ' + path);
 
     var deferred = q.defer();
     var fileName = path.replace(/^.*[\\\/]/, '');
@@ -90,21 +90,21 @@ function uploadImgToDb(conn, eventId, path) {
         .then(function (fileSize) {
             fs.open(path, 'r', function (status, fd) {
                 if (status) {
-                    logger.log(status.message);
+                    logger.error(status.message);
                     deferred.reject(status);
                     return;
                 }
                 var buffer = new Buffer(fileSize);
                 fs.read(fd, buffer, 0, fileSize, 0, function (err, num) {
                     if (err) {
-                        logger.log(err);
+                        logger.error(err);
                         deferred.reject(err);
                         return;
                     }
                     conn.query("INSERT INTO eventimg (EVENTID, NAME, IMG) VALUES (?,?,?)", [eventId, fileName, buffer], function (err, result) {
                         if (err) {
-                            logger.log('uploadImgToDb failed');
-                            logger.log(err);
+                            logger.error('uploadImgToDb failed');
+                            logger.error(err);
                             deferred.reject(err);
                             return;
                         }

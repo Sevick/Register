@@ -17,65 +17,138 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
 
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-animate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.3.0/ui-bootstrap-tpls.js"></script>
+
+
+    <script type="text/javascript" src="/js/tableExport/tableExport.js"></script>
+    <script type="text/javascript" src="/js/jquery.base64/jquery.base64.js"></script>
+    <script type="text/javascript" src="/js/tableExport/html2canvas.js"></script>
+    <script type="text/javascript" src="/js/tableExport/jspdf/libs/sprintf.js"></script>
+    <script type="text/javascript" src="/js/tableExport/jspdf/jspdf.js"></script>
+    <script type="text/javascript" src="/js/tableExport/jspdf/libs/base64.js"></script>
+
     <script src="/js/eventdata.js"></script>
     <link rel="stylesheet" type="text/css" href="./css/eventdata.css">
 
     <link rel="stylesheet" type="text/css" href="/css/memberslist.css">
+    <link rel="stylesheet" type="text/css" href="/css/animation.css">
 </head>
-<body>
+<body ng-app="MermbersList">
 
-    <div class="container">
+<div class="container">
 
-        <%- include eventdata.ejs %>
+    <%- include eventdata.ejs %>
 
-        <div class="row">
-            <div class="col-md-12 col-xs-12">
-                <table id="membersTable" class="table table-hover table-striped table-condensed table-bordered">
-                    <tr class="membersTableHeader">
-                        <td class="col-md-1">#</td>
-                        <% for (var key in memberslist[0]) {
-                             if (key != "eventid" && key != "memberid"){%>
-                                    <td><%= key %></td>
-                        <%}  } %>
-                        <td class="col-md-1 narrow-col"></td>
+    <div class="row">
+        <div class="col-md-12 col-xs-12">
+
+
+            <div ng-controller="membersListCtrl">
+                <div class="table-responsive">
+                <table id="membersTable" class="table table-hover table-striped table-bordered">
+
+                    <thead>
+                    <tr>
+                        <th ng-repeat="(fieldkey,fieldvalue) in membersList[0]" class="membersTableHeader">{{
+                            colTitlesSubst(fieldkey); }}
+                        </th>
+                        <th>&nbsp;</th>
+                    </tr>
+                    </thead>
+
+                    <tr ng-repeat="member in membersList | orderBy:predicate:reverse | filter:paginate| filter:search"
+                        ng-class-odd="'odd'">
+                        <td ng-repeat="(memberField, memberData) in member">
+                            <span ng-if="memberField!='confirmed'" class="memberData">{{ confirmedSubst(memberField,memberData); }}</span>
+                            <span ng-if="memberField=='confirmed' && memberData=='1'" class="glyphicon glyphicon-ok confirmed"></span>
+                        </td>
+                        <td class="col-xs-1 delspan">
+                            <span class="glyphicon glyphicon-remove-circle delMember"
+                                  memberid="{{member.memberid}}"></span>
+                        </td>
                     </tr>
 
-                    <% for (var memberIdx = 0; memberIdx < memberslist.length; memberIdx++) { %>
-                        <tr class="membersDataRow">
-                            <td class="num-rows">
-                                <%= memberIdx +1 %>
-                            </td>
-                            <% for (var fieldIdx  in memberslist[memberIdx]) {
-                                if (fieldIdx != "eventid" && fieldIdx != "memberid"){%>
-                                    <td><%= (memberslist[memberIdx])[fieldIdx] %></td>
-                            <%} } %>
-                            <td class="col-xs-1 delspan">
-                                <span class="glyphicon glyphicon-remove-circle delMember" memberid="<%= memberslist[memberIdx]['memberid'] %>"></span>
-                            </td>
-                    <% } %>
                 </table>
+
+            </div>
             </div>
         </div>
     </div>
 
+    <button id="exportToExcelButton" class="btn btn-primary pull-right glyphButton"><span class="glyphicon glyphicon-download"></span> Export to Excel</button>
+
     <script>
-
-        jQuery(document).ready(function($) {
-            $('.carousel').carousel();
-        });
-
-
-
         var eventdata = '<%- JSON.stringify(eventdata) %>';
         setupEventData(JSON.parse(eventdata));
         var fieldsJSON = '<%- JSON.stringify(fields) %>';
         var fields = JSON.parse(fieldsJSON);
 
-        var membersList=<%- JSON.stringify(memberslist) %>;
+        var membersList =<%- JSON.stringify(memberslist) %>;
         console.log(membersList);
 
-        var onDel = function (){
-            memberId2Del = {memberid : this.getAttribute('memberid')};
+        jQuery(document).ready(function ($) {
+            $('.carousel').carousel();
+        });
+
+        //$('#exportToExcelButton').click(exportToExcel);
+
+        $('#exportToExcelButton').click(function () {
+            $('#membersTable').tableExport({type: 'excel', escape: 'false'});
+        });
+
+        $('#exportToPDFButton').click(function () {
+            $('#membersTable').tableExport({type: 'pdf', pdfFontSize: '7', escape: 'false'});
+        });
+
+
+        var titleSubst = [['confirmed', 'cnf'], ['memberid', 'id']];
+        var titleMap = new Map(titleSubst);
+
+
+        var app = angular.module('MermbersList', ['ui.bootstrap', 'ngAnimate']);
+        var ctrl = app.controller('membersListCtrl', ['$scope', function ($scope) {
+            console.log("scope init");
+            $scope.predicate = 'name';
+            $scope.membersList = membersList;
+
+            $scope.confirmedSubst = function (key, value) {
+                if (key == 'confirmed') {
+                    if (value == '1') {
+                        return '';
+                    }
+                    else {
+                        return "";
+                    }
+                }
+                else {
+                    return value;
+                }
+            };
+
+            $scope.colTitlesSubst = function (value) {
+                if (titleMap.get(value)) {
+                    return titleMap.get(value);
+                }
+                else {
+                    return value;
+                }
+            };
+
+            $scope.checkConfirmField = function (fieldName) {
+                return fieldName == 'confirmed';
+            }
+
+        }]);
+
+        function exportToExcel() {
+            window.open('data:application/vnd.ms-excel,' + document.getElementById('#membersTable'))
+        }
+
+
+        function onDel() {
+            memberId2Del = {memberid: this.getAttribute('memberid')};
             console.log(memberId2Del);
             $(this).parent().parent().remove();
 

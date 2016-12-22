@@ -5,11 +5,12 @@
 "use strict";
 
 var jwt = require('jsonwebtoken');
+var logger = require('./logger').getLogger("AUTH");
 
 exports.checkAuth =checkAuth;
 
 function checkAuth(req, res, next) {
-    logger.log('checkAuth');
+    logger.info('checkAuth');
     //  if the user isn't logged in, redirect them to a login page, save original request url to cookies (backlink)
     if(!req.signedCookies['auth']) {
         authFailed(req,res);
@@ -21,7 +22,7 @@ function checkAuth(req, res, next) {
                 authFailed(req,res);
                 return;
             }
-            logger.log('Auth: Decoded userId='+decoded.userId);
+            logger.debug('Auth: Decoded userId='+decoded.userId);
             req.userId=decoded.userId;
             next();
         });
@@ -29,8 +30,8 @@ function checkAuth(req, res, next) {
 }
 
 function authFailed(req,res){
-    logger.log('authFailed');
-    logger.log('backlink='+ req.protocol + '://' + req.get('host') + req._parsedOriginalUrl.pathname);
+    logger.info('authFailed');
+    logger.debug('backlink='+ req.protocol + '://' + req.get('host') + req._parsedOriginalUrl.pathname);
     res.cookie('backlink', req.protocol + '://' + req.get('host') + req._parsedOriginalUrl.pathname);
     res.redirect("/login");
 

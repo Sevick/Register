@@ -13,7 +13,7 @@ var q = require('q');
 var rmdir = require('rmdir');
 var auth = require('../auth');
 var eventModel = require('../model/event');
-
+var logger = require('../logger').getLogger("ROUTES/ROUTE_EVENT");
 
 var router = express.Router();
 module.exports = router;
@@ -27,6 +27,7 @@ router.get('/', auth.checkAuth, function (req, res, next) {
         // routeEvent create request
         var newEventData={
             eventdata: '',
+            action: 'Create',
             fields: ''
         };
         res.render('event', newEventData);
@@ -36,10 +37,11 @@ router.get('/', auth.checkAuth, function (req, res, next) {
         // routeEvent update request
         db.getEventData(req.query.id)
             .then((result) => {
+                result.action = 'Update';
                 res.render('event', result);
             })
             .catch((err) => {
-                logger.log(err);
+                logger.error(err);
                 res.send(err);
             })
     }
@@ -49,17 +51,18 @@ router.get('/', auth.checkAuth, function (req, res, next) {
 
 
 router.post('/newevent', auth.checkAuth, function (req, res) {
-    logger.log("POST /newevent");
+    logger.info("POST /newevent");
     //logger.log(req.body);
 
-    logger.log('req.userId='+req.userId);
+    logger.debug('req.userId='+req.userId);
 
     if (!req.body.eventId) {
         // insert new routeEvent
+        logger.debug("Creating new event");
         insertEvent(req.userId, req.body)
             .then((newEventId)=> {
-                logger.log("insertEvent done.  newEventId=" + newEventId);
-                sendResponseInvite(req, res, eventId);
+                logger.debug("insertEvent done.  newEventId=" + newEventId);
+                sendResponseInvite(req, res, newEventId);
             })
             .catch((err) => {
                 sendResposnseErr(err);
@@ -68,7 +71,8 @@ router.post('/newevent', auth.checkAuth, function (req, res) {
     }
     else{
         // update existing routeEvent
-        var removedFilesArray=JSON.parse(req.body.removedFilesArray);
+        logger.debug("Updating existing event");
+        var removedFilesArray=JSON.parse(req.body.customFieldsUpdatesArray);
         var conn;
         db.getConnection()
             .then((dbconnect) => {
@@ -77,15 +81,19 @@ router.post('/newevent', auth.checkAuth, function (req, res) {
             })
             .then(()=>{
                 if (removedFilesArray.length>0) {
-                    logger.log('removing images');
-                    logger.log(removedFilesArray);
+                    logger.debug('removing images');
+                    logger.debug(removedFilesArray);
                     conn.query(queryRemoveImages, [req.body.eventId,removedFilesArray], function (err, result) {
                         if (err) {
-                            logger.log('Error acquired trying to remove images');
-                            logger.log(err);
+                            logger.error('Error acquired trying to remove images');
+                            logger.error(err);
                         }
                     });
                 }
+            })
+            .then(()=>{
+                logger.debug('db_insertEventFields');
+                return eventModel.db_insertEventFields(conn, req.body.eventId, req.body.customFields);
             })
             .then(()=>{
                 return addImages(conn, req.body.eventId, req.body);
@@ -94,35 +102,38 @@ router.post('/newevent', auth.checkAuth, function (req, res) {
                 return db.commitTransaction(conn);
             })
             .then(()=>{
-                logger.log('update done');
+                logger.debug('update done');
                 sendResponseInvite(req, res, req.body.eventId);
             })
             .catch((err)=>{
-                logger.log(err);
+                logger.error(err);
             })
     }
 });
 
-function sendResponseInvite(req, resp, newEventId){
+function sendResponseInvite(req, res, newEventId){
+    logger.debug('sendResponseInvite');
     var responsedata = {
+        status: "success",
         eventId: newEventId,
         host: req.protocol + '://' + req.get('host'),
         redirect: req.protocol + '://' + req.get('host') + '/invite?id=' + newEventId
     };
-    resp.send(responsedata);
+    res.send(responsedata);
 }
 
-function sendResposnseErr(req, resp, err){
+function sendResposnseErr(req, res, err){
     var responsedata = {
+        status: "err",
         err: err,
     };
-    resp.send(responsedata);
+    res.send(responsedata);
 }
 
 
 
 router.post('/file-upload', function (req, res) {
-    logger.log('POST /file-upload');
+    logger.info('POST /file-upload');
     var eventRandomHash = req.query.hash;
     var uploadPath = './uploads/' + eventRandomHash + '/';
 
@@ -133,7 +144,7 @@ router.post('/file-upload', function (req, res) {
                     callback(null, uploadPath);
                 },
                 filename: function (request, file, callback) {
-                    logger.log(file);
+                    logger.debug(file);
                     callback(null, file.originalname)
                 }
             });
@@ -141,13 +152,13 @@ router.post('/file-upload', function (req, res) {
 
             upload(req, res, function (err) {
                 if (err) {
-                    logger.log('Error Occured' + err);
-                    logger.log(err.stack);
+                    logger.error('Error Occured' + err);
+                    logger.error(err.stack);
                     return;
                 }
-                logger.log(req.files);
+                logger.debug(req.files);
+                logger.debug('Images uploaded');
                 res.end('Your Files Uploaded');
-                logger.log('Images uploaded');
             })
         })
         .catch(function (err) {
@@ -157,10 +168,10 @@ router.post('/file-upload', function (req, res) {
 
 router.get('/image', function (req, res) {
     // ?id=XXX&img=XXXXX
-    logger.log('GET /image');
+    logger.info('GET /image');
     var eventId = req.query.id;
     var imageName = req.query.img;
-    logger.log("eventId=" + eventId + "  imageName=" + imageName);
+    logger.debug("eventId=" + eventId + "  imageName=" + imageName);
 
     if (!eventId || !imageName) {
         res.end('');
@@ -168,15 +179,15 @@ router.get('/image', function (req, res) {
     }
     db.connection.query(querySelectEventImg, [eventId, imageName])
         .on('result', function (row) {
-            logger.log("Image retrieved:  eventId=" + eventId + "  name=" + imageName);
+            logger.debug("Image retrieved:  eventId=" + eventId + "  name=" + imageName);
             var imageExt = tools.getFileExt(imageName);
             res.writeHead(200, {'Content-Type': 'image/' + imageExt});
             res.write(row.img);
             res.end();
         })
         .on('error', function (err) {
-            logger.log("Error while retrieving image:  eventId=" + eventId + "  name=" + imageName);
-            logger.log(err);
+            logger.error("Error while retrieving image:  eventId=" + eventId + "  name=" + imageName);
+            logger.error(err);
             res.send('');
         });
 });
@@ -196,11 +207,11 @@ function insertEvent(userId,eventData) {
         })
         .then((newEventId)=> {
             eventId = newEventId;
-            logger.log('db_insertEventFields');
+            logger.debug('db_insertEventFields');
             return eventModel.db_insertEventFields(conn, eventId, eventData.customFields);
         })
         .then(() => {
-            logger.log('db_moveImagesToDb');
+            logger.debug('db_moveImagesToDb');
             return addImages(conn,eventId,eventData);
             
 /*
@@ -210,11 +221,11 @@ function insertEvent(userId,eventData) {
 */
         })
         .then(()=> {
-            logger.log('commit');
+            logger.debug('commit');
             return db.commitTransaction(conn);
         })
         .then(()=> {
-            logger.log('insertEvent done.   eventId='+eventId);
+            //logger.log('insertEvent done.   eventId='+eventId);
             deferred.resolve(eventId);
         })
         .catch((err)=> {

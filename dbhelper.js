@@ -6,6 +6,7 @@
 
 var q = require('q');
 var mysql = require('mysql');
+var logger = require('./logger').getLogger("DBHELPER");
 
 var pool = mysql.createPool(cfg.getParam('dbconfig')); // http://stackoverflow.com/questions/18496540/node-js-mysql-connection-pooling
 
@@ -28,11 +29,11 @@ exports.connection = {
             }
             if (conn) {
                 var q = conn.query.apply(conn, queryArgs);
-                q.on('end', function () {
+                q.on('end', () =>  {
                     conn.release();
                 });
 
-                events.forEach(function (args) {
+                events.forEach((args) => {
                     q.on.apply(q, args);
                 });
             }
@@ -56,7 +57,6 @@ exports.commitTransaction = commitTransaction;
 exports.rollbackTransaction = rollbackTransaction;
 
 
-
 //-----------------------------------------------------------------------------------------------------------------
 function getConnection() {
     var deferred = q.defer();
@@ -71,9 +71,9 @@ function getConnection() {
     return deferred.promise;
 };
 
-function beginTransaction(conn){
+function beginTransaction(conn) {
     var deferred = q.defer();
-    
+
     conn.beginTransaction(function (err) {
         if (err) {
             deferred.reject(err);
@@ -81,7 +81,7 @@ function beginTransaction(conn){
         }
         deferred.resolve();
     });
-    
+
     return deferred.promise;
 }
 
@@ -97,20 +97,20 @@ function commitTransaction(conn) {
     return deferred.promise;
 }
 
-function rollbackTransaction(conn){
+function rollbackTransaction(conn) {
     var deferred = q.defer();
 
     conn.rollback(function () {
         deferred.resolve();
     });
-    
+
     return deferred.promise;
 }
 
 //-----------------------------------------------------------------------------------------------------------------
 function getEventData(eventId) {
     var deferred = q.defer();
-    logger.log('getEventData quering database...');
+    logger.debug('getEventData quering database...');
     getConnection()
         .then((conn) => {
             conn.query(queryEventData, eventId, (err, result) => {
@@ -119,7 +119,8 @@ function getEventData(eventId) {
                     deferred.reject(err);
                     return;
                 }
-                if (result.length < 1) {
+                if (result.length<1 || result[0].constructor.name!=='RowDataPacket') {
+                    logger.debug('getEventData: No data found');
                     deferred.reject('No data found');
                     return;
                 }
@@ -131,7 +132,7 @@ function getEventData(eventId) {
                 try {
                     var fields = JSON.parse(result[0].fields);
                     delete result[0].fields;
-                    logger.log(result[0]);
+                    //logger.log(result[0]);
                     var result = {
                         eventdata: result[0],
                         fields: fields
@@ -139,8 +140,8 @@ function getEventData(eventId) {
                     deferred.resolve(result);
                 }
                 catch (err) {
-                    logger.log('Error on processing data in getEventData for routeEvent ' + eventId);
-                    logger.log(err);
+                    logger.error('Error on processing data in getEventData for routeEvent ' + eventId);
+                    logger.error(err);
                     deferred.reject(err);
                 }
 
@@ -154,14 +155,14 @@ function getEventData(eventId) {
 
 
 //-----------------------------------------------------------------------------------------------------------------
-function getMembersData(eventId){
+function getMembersData(eventId) {
     var deferred = q.defer();
     var conn;
-    
-    logger.log('getMembersData quering database...');
+
+    logger.info('getMembersData quering database...');
     db.getConnection()
         .then((connection) => {
-            conn=connection;
+            conn = connection;
             return getSqlForDataRetrive(conn, eventId);
         })
         .then((sqltext) => {
@@ -174,8 +175,8 @@ function getMembersData(eventId){
         .catch((err)=> {
             if (conn)
                 conn.release();
-            logger.log('Error accuired while getMembersData retriving data from database');
-            logger.log(err);
+            logger.error('Error accuired while getMembersData retriving data from database');
+            logger.error(err);
             deferred.reject(err);
         })
 
@@ -190,8 +191,8 @@ function getSqlForDataRetrive(conn, eventId) {
             deferred.reject(err);
             return;
         }
-        logger.log("Pivot sql: ");
-        logger.log(result[0].pivotsql);
+        logger.debug("Pivot sql: ");
+        logger.debug(result[0].pivotsql);
         deferred.resolve(result[0].pivotsql);
     })
     return deferred.promise;
@@ -202,9 +203,9 @@ function getMemebersListData(conn, eventId, sqltext) {
     var deferred = q.defer();
 
     var rows = [];
-    conn.query(sqltext, [eventId], (err,result)=>{
-        if (err){
-            logger.log(err);
+    conn.query(sqltext, [eventId], (err, result)=> {
+        if (err) {
+            logger.error(err);
             deferred.reject(err);
             return;
         }

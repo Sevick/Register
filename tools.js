@@ -6,6 +6,7 @@
 
 var fs = require('fs');
 var q = require('q');
+var logger = require('./logger').getLogger("TOOLS");
 
 
 exports.getFileExt = function(path) {
@@ -20,7 +21,7 @@ exports.getFilesize = function(path) {
             deferred.resolve(stats.size);
         }
         else {
-            logger.log("getFilesize error");
+            logger.error("getFilesize error");
             deferred.reject(err);
         }
     });
@@ -36,8 +37,8 @@ exports.checkCreateDir = function(path) {
             //logger.log(err);
             fs.mkdir(path, (err) => {
                 if (err && err.code!=='EEXIST') {       // 4075 - file already exists
-                    logger.log("Unable to create directory: " + path);
-                    logger.log(err);
+                    logger.error("Unable to create directory: " + path);
+                    logger.error(err);
                     deferred.reject("Unable to create directory");
                 }
                 else {
@@ -56,7 +57,7 @@ exports.checkCreateDir = function(path) {
 exports.rmDir = function(dirPath){
     var deferred = q.defer();
     rmdir(dirPath, (err, dirs, files) => {
-        logger.log('Directory removed: ' + dirPath);
+        logger.info('Directory removed: ' + dirPath);
         if (err) {
             deferred.reject(err);
             return;

@@ -13,6 +13,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var q = require('q');
 var ejs = require('ejs');
+var logger = require('../logger').getLogger("ROUTES/REGISTER");
+
 
 var express = require('express');
 var router = express.Router();
@@ -24,19 +26,14 @@ const queryInsertMember="INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VAL
 
 /* GET members listing. */
 
-router.get('/test', function (req, res, next) {
-    logger.log('GET test/');
-
-
-});
 
 
 router.get('/', function (req, res, next) {
-    logger.log('GET register/   ' + req.query.id);
+    logger.info('GET register/   ' + req.query.id);
 
     if (!req.query.id) {
-        logger.log('routeEvent id not specified');
-        res.send('routeEvent id not specified');
+        logger.info('Event id not specified');
+        sendErrResponse(req,res,'Event id not specified');
         return;
     }
 
@@ -45,13 +42,22 @@ router.get('/', function (req, res, next) {
             res.render('register', result);
         })
         .catch((err) => {
-            logger.log(err);
-            res.send(err);
+            logger.info(err);
+            sendErrResponse(req,res,'Invalid event id:'+req.query.id);
         })
 });
 
+function sendErrResponse(req, res, err) {
+    var errdata = {
+        status: "error",
+        errmsg: err
+    };
+    res.render('error',errdata);
+}
+
+
 router.post('/', function (req, res, next) {
-    logger.log('POST register/   ' + req.query.id);
+    logger.info('POST register/   ' + req.query.id);
 
     if (req.query.id) {
 
@@ -59,23 +65,23 @@ router.post('/', function (req, res, next) {
         insertEventmember(req.body)
             .then((regMemberData)=>{
                 memberData=regMemberData;
-                //logger.log('Data sumbitted to db');
+                logger.debug('Data sumbitted to db');
                 var memberApproveLink=req.protocol + '://' + req.get('host') + '/registered/confirm?id=' + memberData.eventmemberid+'&confirm='+memberData.confirmcode;
                 return sendRegistrationEmail(req.body.eventId,memberData.eventmemberid, req.body.email, memberApproveLink);
             })
             .then(() => {
-                //logger.log('Mail sent');
+                logger.info('Registration confirmation email sent to:'+req.body.email);
                 sendRegistered(req, res, memberData.eventmemberid);
             })
 
             .catch((err) => {
-                logger.log('Failed to submit data to db');
-                logger.log(err);
+                logger.error('Failed to submit data to db');
+                logger.error(err);
             });
 
     }
     else {
-        logger.log('routeEvent id not specified');
+        logger.info('routeEvent id not specified');
         res.send('routeEvent id not specified');
     }
 });
@@ -87,7 +93,7 @@ function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
     db.getEventData(eventId)
         .then((result) => {
 
-            logger.log(result);
+            logger.debug(result);
             var renderOptions = {};
 
             result.approvelink=memberApproveLink;
@@ -95,8 +101,8 @@ function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
             ejs.renderFile('./views/registeremail.ejs', result, renderOptions, (err, renderedHtml) => {
                 // str => Rendered HTML string
                 if (err) {
-                    logger.log('Unable to render registeremail.ejs');
-                    logger.log(err);
+                    logger.error('Unable to render registeremail.ejs');
+                    logger.error(err);
                     deferred.reject(err);
                 }
 
@@ -105,15 +111,15 @@ function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
                         deferred.resolve();
                     })
                     .catch((err)=> {
-                        logger.log('Mail send error:');
-                        logger.log(err);
+                        logger.warn('Mail send error:');
+                        logger.warn(err);
                         deferred.reject(err);
                     });
             });
         })
         .catch((err) => {
-            logger.log('sendRegistrationEmail')
-            logger.log(err);
+            logger.error('sendRegistrationEmail failed')
+            logger.error(err);
             deferred.reject(err);
         })
 
@@ -134,7 +140,7 @@ function insertEventmember(memberData) {
                 }
 
                 if (!memberData['email']) {
-                    logger.log(memberData);
+                    logger.error(memberData);
                     deferred.reject('Email not specified');
                     return;
                 }
@@ -144,14 +150,14 @@ function insertEventmember(memberData) {
 
                 conn.query(queryInsertMember, [memberData.eventId, confirmCode, memberData['email']], function (err, result) {
                     if (err) {
-                        logger.log(err);
+                        logger.error(err);
                         return conn.rollback(function () {
                             deferred.reject(err);
                         });
                     }
 
                     var eventmemberId = result.insertId;
-                    logger.log("eventmemberId=" + eventmemberId);
+                    logger.debug("eventmemberId=" + eventmemberId);
 
                     var promises = [];
                     for (var memberDataFieldIdx in memberData) {
@@ -181,8 +187,8 @@ function insertEventmember(memberData) {
 
                         })
                         .catch((err) => {
-                            logger.log('Error while inserting fields data');
-                            logger.log(err);
+                            logger.error('Error while inserting fields data');
+                            logger.error(err);
                             deferred.reject(err);
                         });
                 })
@@ -191,8 +197,8 @@ function insertEventmember(memberData) {
             });
         })
         .catch((err) => {
-            logger.log('Unable to connect to database');
-            logger.log(err);
+            logger.error('Unable to connect to database');
+            logger.error(err);
         })
 
 

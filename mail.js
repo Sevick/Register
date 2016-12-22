@@ -7,7 +7,7 @@
 
 var q = require('q');
 var nodemailer = require('nodemailer');
-
+var logger = require('./logger').getLogger("MAIL");
 
 var transporter = nodemailer.createTransport(config.getParam('mailconfig').srvpath);
 

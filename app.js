@@ -5,8 +5,9 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var logger = require('./logger').getLogger("APP");
 
-global.logger = require('./logger')();
+
 global.cfg = require('./config')();
 global.db = require('./dbhelper');
 global.tools = require('./tools');
@@ -43,5 +44,5 @@ app.use('/memberslist', memberslist);
 
 
 http.listen(config.getParam('port'), function () {
-    logger.log('listening on port ' + config.getParam('port'));
+    logger.info('listening on port ' + config.getParam('port'));
 });

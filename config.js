@@ -1,6 +1,7 @@
 
 var fs = require('fs');
 var extend = require('node.extend');
+var logger = require('./logger').getLogger("CONFIG");
 
 var configpath = './config/register.conf';
 
@@ -55,7 +56,7 @@ function getParam(param) {
 
 
 function init() {
-    logger.log("Reading config: "+configpath);
+    logger.info("Reading config: "+configpath);
     try {
         var configFile = fs.readFileSync(configpath, 'utf8', 'r');
         if (!configFile) {
@@ -66,16 +67,15 @@ function init() {
         }
     }
     catch (err) {
-        logger.log("Error reading config");
-        logger.log(err);
+        logger.error("Error reading config");
+        logger.error(err);
         writeConfig();
     }
     return configFile;
 }
 
 function writeConfig() {
-    logger.log("writeConfig: "+configpath);
-    logger.log(config);
-    logger.log(JSON.stringify(config));
+    logger.info("writeConfig: "+configpath);
+    logger.debug(JSON.stringify(config));
     fs.writeFileSync(configpath, JSON.stringify(config));
 }

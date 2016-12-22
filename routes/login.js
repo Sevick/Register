@@ -8,6 +8,7 @@ var favicon = require('serve-favicon');
 var q = require('q');
 var jwt = require('jsonwebtoken');
 var md5 = require('md5');
+var logger = require('../logger').getLogger("ROUTES/LOGIN");
 
 var router = express.Router();
 module.exports = router;
@@ -16,22 +17,37 @@ const saltRounds = 5;
 const querySelectUser = "SELECT id FROM usr WHERE name=? and passwd=?";
 
 
+router.get('/test', function (req, res, next) {
+    logger.info('GET test/');
+});
+
+
+router.post('/test/:recipient', function (req, res, next) {
+    var recipient = req.params.recipient;
+    logger.info('POST test/');
+    logger.debug('recipient:'+recipient);
+    logger.debug(req.body);
+    res.send('You data was received and rejected');
+});
+
+
+
 router.get('/', function (req, res, next) {
-    logger.log('GET /login');
+    logger.info('GET /login');
     res.sendFile(path.resolve(__dirname + '/../views/login.html'));
 });
 
 
 router.post('/', function (req, res, next) {
-    logger.log('POST /login');
+    logger.info('POST /login');
 
     if (!req.body.username || !req.body.passwd) {
         sendLoginFailed(req, res);
         return;
     }
 
-    logger.log('username: ' + req.body.username + '   passwd:  ' + req.body.passwd);
-    logger.log('md5:'+md5(req.body.passwd));
+    logger.debug('username: ' + req.body.username + '   passwd:  ' + req.body.passwd);
+    logger.debug('md5:'+md5(req.body.passwd));
 
     checkUser(req.body.username, md5(req.body.passwd))
         .then((dbUserId) => {
@@ -70,16 +86,16 @@ function checkUser(username, password) {
                 return;
             }
             if (rows.length > 1) {
-                logger.log('checkUser detects database problem: more than one row returned for user: ' + username);
+                logger.error('checkUser detects database problem: more than one row returned for user: ' + username);
                 deferred.reject('checkUser detects database problem: more than one row returned for user: ' + username);
                 return;
             }
-            logger.log('User successfuly checked. Id='+rows[0].id);
+            logger.debug('User successfuly checked. Id='+rows[0].id);
             deferred.resolve(rows[0].id);
         })
         .on('error', function (err) {
-            logger.log('checkUser detects database problem while checking user: ' + username);
-            logger.log(err);
+            logger.error('checkUser detects database problem while checking user: ' + username);
+            logger.error(err);
             deferred.reject(err);
         });
 

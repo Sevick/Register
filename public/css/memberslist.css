@@ -42,3 +42,17 @@ body{
     text-align: center;
 
 }
+
+.confirmed{
+    color: #00cf0c;
+    width: 100%;
+    text-align: center;
+}
+
+.memberData{
+    white-space: nowrap;
+}
+
+.glyphButton{
+    vertical-align: middle;
+}
