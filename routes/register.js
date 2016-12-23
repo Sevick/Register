@@ -21,11 +21,10 @@ var router = express.Router();
 module.exports = router;
 
 //const queryEventData = "SELECT id,name,dt,regstart,regend,info,price,currency,minmembers,maxmembers, IFNULL(memberscount,0) memberscount, imgslist, vacancies, fields FROM v_eventdata WHERE id=?";
-const queryInsertMemberdata="INSERT INTO memberdata (memberID,FIELDID,DATA) VALUES (?,?,?)";
-const queryInsertMember="INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)";
+const queryInsertMemberdata = "INSERT INTO memberdata (memberID,FIELDID,DATA) VALUES (?,?,?)";
+const queryInsertMember = "INSERT INTO eventmember (EVENTID,CONFIRMCODE,EMAIL) VALUES (?,?,?)";
 
 /* GET members listing. */
-
 
 
 router.get('/', function (req, res, next) {
@@ -33,7 +32,7 @@ router.get('/', function (req, res, next) {
 
     if (!req.query.id) {
         logger.info('Event id not specified');
-        sendErrResponse(req,res,'Event id not specified');
+        sendErrResponse(req, res, 'Event id not specified');
         return;
     }
 
@@ -43,7 +42,7 @@ router.get('/', function (req, res, next) {
         })
         .catch((err) => {
             logger.info(err);
-            sendErrResponse(req,res,'Invalid event id:'+req.query.id);
+            sendErrResponse(req, res, 'Invalid event id:' + req.query.id);
         })
 });
 
@@ -52,7 +51,7 @@ function sendErrResponse(req, res, err) {
         status: "error",
         errmsg: err
     };
-    res.render('error',errdata);
+    res.render('error', errdata);
 }
 
 
@@ -63,20 +62,35 @@ router.post('/', function (req, res, next) {
 
         var memberData;
         insertEventmember(req.body)
-            .then((regMemberData)=>{
-                memberData=regMemberData;
+            .then((regMemberData)=> {
+                memberData = regMemberData;
                 logger.debug('Data sumbitted to db');
-                var memberApproveLink=req.protocol + '://' + req.get('host') + '/registered/confirm?id=' + memberData.eventmemberid+'&confirm='+memberData.confirmcode;
-                return sendRegistrationEmail(req.body.eventId,memberData.eventmemberid, req.body.email, memberApproveLink);
+                var memberApproveLink = req.protocol + '://' + req.get('host') + '/registered/confirm?id=' + memberData.eventmemberid + '&confirm=' + memberData.confirmcode;
+                return sendRegistrationEmail(req.body.eventId, memberData.eventmemberid, req.body.email, memberApproveLink);
             })
             .then(() => {
-                logger.info('Registration confirmation email sent to:'+req.body.email);
+                logger.info('Registration confirmation email sent to:' + req.body.email);
                 sendRegistered(req, res, memberData.eventmemberid);
             })
 
             .catch((err) => {
-                logger.error('Failed to submit data to db');
-                logger.error(err);
+                var result;
+                if (err.code === 'ER_DUP_ENTRY') {
+                    var result={
+                        status: 'error',
+                        error: 'ERR_DUP',
+                        errmsg: 'This email was already used for registarion to this event'
+                    }
+                }
+                else {
+                    logger.error('Failed to submit data to db');
+                    var result={
+                        status: 'error',
+                        error: 'ERR_INT',
+                        errmsg: 'Intenal problem'
+                    }
+                }
+                res.send(result);
             });
 
     }
@@ -87,7 +101,7 @@ router.post('/', function (req, res, next) {
 });
 
 
-function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
+function sendRegistrationEmail(eventId, memberId, memberMail, memberApproveLink) {
     var deferred = q.defer();
 
     db.getEventData(eventId)
@@ -96,7 +110,7 @@ function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
             logger.debug(result);
             var renderOptions = {};
 
-            result.approvelink=memberApproveLink;
+            result.approvelink = memberApproveLink;
 
             ejs.renderFile('./views/registeremail.ejs', result, renderOptions, (err, renderedHtml) => {
                 // str => Rendered HTML string
@@ -106,7 +120,7 @@ function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
                     deferred.reject(err);
                 }
 
-                mail.sendMail(memberMail, 'Please confirm you registration to '+result.eventdata.name, renderedHtml)
+                mail.sendMail(memberMail, 'Please confirm you registration to ' + result.eventdata.name, renderedHtml)
                     .then(()=> {
                         deferred.resolve();
                     })
@@ -125,7 +139,6 @@ function sendRegistrationEmail(eventId, memberId,memberMail, memberApproveLink){
 
     return deferred.promise;
 }
-
 
 
 function insertEventmember(memberData) {
@@ -178,7 +191,7 @@ function insertEventmember(memberData) {
                                 }
                                 conn.release();
 
-                                var memberData={
+                                var memberData = {
                                     confirmcode: confirmCode,
                                     eventmemberid: eventmemberId
                                 }
